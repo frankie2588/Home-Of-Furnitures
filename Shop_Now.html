@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home of Modern Furnitures Gallery</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/css/lightgallery.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/css/lg-zoom.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/css/lg-thumbnail.css">
+  <style id="app-style">
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #ffffff;
+    }
+    
+    .accent-color {
+      color: #D4A76A;
+    }
+    
+    .accent-bg {
+      background-color: #D4A76A;
+    }
+    
+    .accent-border {
+      border-color: #D4A76A;
+    }
+    
+    .tab {
+      transition: all 0.3s ease;
+    }
+    
+    .tab.active {
+      border-bottom: 3px solid #D4A76A;
+      color: #D4A76A;
+      font-weight: 600;
+    }
+    
+    .product-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .product-image-container {
+      position: relative;
+      overflow: hidden;
+      height: 260px;
+    }
+    
+    .product-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+    
+    .product-card:hover .product-image {
+      transform: scale(1.05);
+    }
+    
+    .btn-primary {
+      background-color: #D4A76A;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      background-color: #c09458;
+    }
+    
+    .btn-outline {
+      border: 1px solid #D4A76A;
+      color: #D4A76A;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-outline:hover {
+      background-color: #D4A76A;
+      color: white;
+    }
+    
+    .cart-overlay {
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+    
+    .cart-overlay.open {
+      transform: translateX(0);
+    }
+
+    #inquiry-modal, #confirmation-modal {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    #inquiry-modal.active, #confirmation-modal.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+      .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .product-image-container {
+        height: 180px;
+      }
+    }
+
+    .cart-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: #D4A76A;
+      color: white;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .zoom-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      cursor: pointer;
+    }
+
+    .product-card:hover .zoom-icon {
+      opacity: 1;
+    }
+
+    /* Loading spinner */
+    .loading-spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 4px solid #D4A76A;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="bg-white shadow">
+    <div class="container mx-auto px-4 py-6">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center">
+          <h1 class="text-2xl font-bold text-gray-800">Home of Modern Furnitures</h1>
+        </div>
+        <div class="relative">
+          <button id="cart-button" class="relative p-2 text-gray-700 hover:text-gray-900">
+            <i class="fas fa-shopping-cart text-xl"></i>
+            <span id="cart-count" class="cart-badge hidden">0</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Gallery -->
+  <main class="container mx-auto px-4 py-8">
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">Our Collection</h2>
+    <p class="text-gray-600 mb-8">Discover quality furniture pieces for every room in your home.</p>
+    
+    <!-- Category Tabs -->
+    <div class="flex overflow-x-auto mb-8 pb-2 scrollbar-hide">
+      <button class="tab active px-6 py-3 text-gray-700 whitespace-nowrap mr-2" data-category="all">All</button>
+      <button class="tab px-6 py-3 text-gray-700 whitespace-nowrap mr-2" data-category="sofas">Sofas</button>
+      <button class="tab px-6 py-3 text-gray-700 whitespace-nowrap mr-2" data-category="beds">Beds</button>
+      <button class="tab px-6 py-3 text-gray-700 whitespace-nowrap mr-2" data-category="office-chairs">Office Chairs</button>
+      <button class="tab px-6 py-3 text-gray-700 whitespace-nowrap mr-2" data-category="baby-beds">Baby Beds</button>
+      <button class="tab px-6 py-3 text-gray-700 whitespace-nowrap" data-category="office-tables">Office Tables</button>
+    </div>
+    
+    <!-- Products Grid -->
+    <div id="products-container" class="grid product-grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+      <!-- Products will be loaded here -->
+      <div class="col-span-full text-center py-16">
+        <div class="loading-spinner mx-auto mb-4"></div>
+        <p class="text-gray-600">Loading products...</p>
+      </div>
+    </div>
+  </main>
+  
+  <!-- Shopping Cart Sidebar -->
+  <div id="cart-overlay" class="cart-overlay fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-2xl z-40">
+    <div class="p-6 h-full flex flex-col">
+      <div class="flex justify-between items-center border-b pb-4 mb-4">
+        <h2 class="text-2xl font-bold">Shopping Cart</h2>
+        <button id="close-cart" class="text-gray-500 hover:text-gray-900">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      <div id="cart-items" class="flex-grow overflow-y-auto">
+        <!-- Cart items will appear here -->
+        <div class="text-center py-12 text-gray-500">
+          <i class="fas fa-shopping-cart text-4xl mb-4 opacity-30"></i>
+          <p>Your cart is empty</p>
+          <p class="text-sm mt-2">Browse our collection and add items you love</p>
+        </div>
+      </div>
+      <div class="border-t pt-4 mt-auto">
+        <div class="flex justify-between text-lg font-semibold mb-4">
+          <span>Subtotal:</span>
+          <span id="cart-subtotal">$0.00</span>
+        </div>
+        <button id="checkout-btn" class="w-full py-3 bg-gray-900 text-white font-semibold rounded hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+          Checkout
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Overlay Background -->
+  <div id="overlay-bg" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden"></div>
+  
+  <!-- Inquiry Modal -->
+  <div id="inquiry-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold">Product Inquiry</h3>
+          <button class="inquiry-close text-gray-500 hover:text-gray-900">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <form id="inquiry-form">
+          <input type="hidden" id="inquiry-product-id" name="productId">
+          <div class="mb-4">
+            <label class="block text-gray-700 mb-2" for="inquiry-product-name">Product</label>
+            <input type="text" id="inquiry-product-name" name="productName" class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100" readonly>
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700 mb-2" for="inquiry-name">Your Name</label>
+            <input type="text" id="inquiry-name" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700 mb-2" for="inquiry-email">Email Address</label>
+            <input type="email" id="inquiry-email" name="email" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+          </div>
+          <div class="mb-6">
+            <label class="block text-gray-700 mb-2" for="inquiry-message">Your Question</label>
+            <textarea id="inquiry-message" name="message" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md" required></textarea>
+          </div>
+          <button type="submit" class="w-full py-3 btn-primary text-white font-semibold rounded">
+            <span class="inquiry-submit-text">Submit Inquiry</span>
+            <span class="inquiry-loading hidden">
+              <span class="loading-spinner mr-2"></span>Sending...
+            </span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmation-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+      <div class="p-6 text-center">
+        <div class="w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-full bg-green-100">
+          <i class="fas fa-check text-green-500 text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">Thank You!</h3>
+        <p class="text-gray-600 mb-6">Your order has been placed successfully.</p>
+        <div class="p-4 bg-gray-50 rounded-lg mb-6">
+          <h4 class="font-semibold mb-2 text-left">Order Details:</h4>
+          <div id="order-details" class="text-left">
+            <!-- Order details will be inserted here -->
+          </div>
+        </div>
+        <button id="continue-shopping" class="w-full py-3 btn-primary text-white font-semibold rounded">
+          Continue Shopping
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lightgallery container for image zoom -->
+  <div id="lightgallery-container"></div>
+  
+  <footer class="bg-gray-100 mt-16">
+    <div class="container mx-auto px-4 py-8">
+      <div class="text-center text-gray-600">
+        <p>&copy; 2025 Home of Furnitures. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/lightgallery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script>
+  <script id="app-script">
+    // Product data (simulating API response)
+    const products = [
+      // Sofas
+      {
+        id: 'sofa-1',
+        name: 'Modern Sectional Sofa',
+        category: 'sofas',
+        price: 1299.99,
+        description: 'Spacious L-shaped sectional sofa with plush cushions and durable fabric.',
+        image: 'https://cdn.pixabay.com/photo/2017/09/09/18/25/living-room-2732939_1280.jpg'
+      },
+      {
+        id: 'sofa-2',
+        name: 'Classic 3-Seater Sofa',
+        category: 'sofas',
+        price: 899.99,
+        description: 'Elegant design with comfortable padding and solid wood frame.',
+        image: 'https://cdn.pixabay.com/photo/2017/03/19/01/43/living-room-2155376_1280.jpg'
+      },
+      {
+        id: 'sofa-3',
+        name: 'Recliner Loveseat',
+        category: 'sofas',
+        price: 1199.99,
+        description: 'Dual reclining seats with premium leather upholstery.',
+        image: 'https://cdn.pixabay.com/photo/2019/04/23/05/37/living-room-4148853_1280.jpg'
+      },
+      {
+        id: 'sofa-4',
+        name: 'Sleeper Sofa',
+        category: 'sofas',
+        price: 1499.99,
+        description: 'Convertible sofa that transforms into a comfortable queen-size bed.',
+        image: 'https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923_1280.jpg'
+      },
+      // Beds
+      {
+        id: 'bed-1',
+        name: 'King Size Platform Bed',
+        category: 'beds',
+        price: 1499.99,
+        description: 'Modern platform bed with headboard and wood frame.',
+        image: 'https://cdn.pixabay.com/photo/2016/11/19/13/06/bed-1839183_1280.jpg'
+      },
+      {
+        id: 'bed-2',
+        name: 'Queen Size Canopy Bed',
+        category: 'beds',
+        price: 1299.99,
+        description: 'Elegant four-poster canopy bed with metal frame.',
+        image: 'https://cdn.pixabay.com/photo/2016/07/26/16/16/bedroom-1543493_1280.jpg'
+      },
+      {
+        id: 'bed-3',
+        name: 'Single Bed with Storage',
+        category: 'beds',
+        price: 699.99,
+        description: 'Practical single bed with drawers for efficient storage.',
+        image: 'https://cdn.pixabay.com/photo/2019/12/02/11/23/bedroom-4667665_1280.jpg'
+      },
+      // Office Chairs
+      {
+        id: 'chair-1',
+        name: 'Executive Office Chair',
+        category: 'office-chairs',
+        price: 349.99,
+        description: 'Premium leather chair with adjustable height and lumbar support.',
+        image: 'https://cdn.pixabay.com/photo/2017/08/02/01/31/chair-2569274_1280.jpg'
+      },
+      {
+        id: 'chair-2',
+        name: 'Ergonomic Mesh Chair',
+        category: 'office-chairs',
+        price: 249.99,
+        description: 'Breathable mesh back with ergonomic design for all-day comfort.',
+        image: 'https://cdn.pixabay.com/photo/2020/04/03/07/09/office-chair-4997549_1280.jpg'
+      },
+      {
+        id: 'chair-3',
+        name: 'Visitor Conference Chair',
+        category: 'office-chairs',
+        price: 179.99,
+        description: 'Stackable meeting room chair with padded seat and back.',
+        image: 'https://cdn.pixabay.com/photo/2014/11/06/22/16/chair-519011_1280.jpg'
+      },
+      // Baby Beds
+      {
+        id: 'babybed-1',
+        name: 'Convertible Baby Crib',
+        category: 'baby-beds',
+        price: 399.99,
+        description: '3-in-1 crib that converts to toddler bed and daybed.',
+        image: 'https://cdn.pixabay.com/photo/2019/03/20/06/14/nursery-4067447_1280.jpg'
+      },
+      {
+        id: 'babybed-2',
+        name: 'Toddler Race Car Bed',
+        category: 'baby-beds',
+        price: 299.99,
+        description: 'Fun race car design perfect for transitioning from crib to bed.',
+        image: 'https://cdn.pixabay.com/photo/2017/07/21/22/11/kids-room-2527378_1280.jpg'
+      },
+      // Office Tables
+      {
+        id: 'table-1',
+        name: 'Executive L-Shaped Desk',
+        category: 'office-tables',
+        price: 549.99,
+        description: 'Spacious L-shaped design with built-in storage and cable management.',
+        image: 'https://cdn.pixabay.com/photo/2021/01/24/11/34/home-office-5945001_1280.jpg'
+      },
+      {
+        id: 'table-2',
+        name: 'Standing Desk',
+        category: 'office-tables',
+        price: 649.99,
+        description: 'Adjustable height desk for sitting or standing work positions.',
+        image: 'https://cdn.pixabay.com/photo/2017/02/24/02/37/home-office-2093647_1280.jpg'
+      },
+      {
+        id: 'table-3',
+        name: 'Student Study Desk',
+        category: 'office-tables',
+        price: 249.99,
+        description: 'Compact desk with bookshelf and drawer for efficient studying.',
+        image: 'https://cdn.pixabay.com/photo/2020/10/24/17/17/workplace-5682031_1280.jpg'
+      }
+    ];
+
+    // DOM elements
+    const productsContainer = document.getElementById('products-container');
+    const categoryTabs = document.querySelectorAll('.tab');
+    const cartButton = document.getElementById('cart-button');
+    const cartOverlay = document.getElementById('cart-overlay');
+    const closeCartButton = document.getElementById('close-cart');
+    const overlayBg = document.getElementById('overlay-bg');
+    const cartItemsContainer = document.getElementById('cart-items');
+    const cartCountBadge = document.getElementById('cart-count');
+    const cartSubtotal = document.getElementById('cart-subtotal');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const inquiryModal = document.getElementById('inquiry-modal');
+    const inquiryForm = document.getElementById('inquiry-form');
+    const inquiryCloseBtns = document.querySelectorAll('.inquiry-close');
+    const confirmationModal = document.getElementById('confirmation-modal');
+    const continueShoppingBtn = document.getElementById('continue-shopping');
+    const orderDetailsContainer = document.getElementById('order-details');
+
+    // State
+    let currentCategory = 'all';
+    let cart = [];
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadProducts(currentCategory);
+      loadCart();
+      initEventListeners();
+    });
+
+    // Functions
+    function loadProducts(category) {
+      // Clear container and show loading
+      productsContainer.innerHTML = `
+        <div class="col-span-full text-center py-16">
+          <div class="loading-spinner mx-auto mb-4"></div>
+          <p class="text-gray-600">Loading products...</p>
+        </div>
+      `;
+      
+      // Simulate loading
+      setTimeout(() => {
+        const filteredProducts = category === 'all' 
+          ? products 
+          : products.filter(product => product.category === category);
+          
+        renderProducts(filteredProducts);
+      }, 800);
+    }
+    
+    function renderProducts(productsList) {
+      if (productsList.length === 0) {
+        productsContainer.innerHTML = `
+          <div class="col-span-full text-center py-16">
+            <p class="text-gray-500">No products found in this category.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      productsContainer.innerHTML = '';
+      
+      productsList.forEach(product => {
+        const productCard = document.createElement('div');
+        productCard.className = 'product-card bg-white rounded-lg overflow-hidden shadow-md';
+        productCard.innerHTML = `
+          <div class="product-image-container">
+            <img src="${product.image}" alt="${product.name}" class="product-image">
+            <div class="zoom-icon" data-src="${product.image}" data-product-name="${product.name}">
+              <i class="fas fa-search-plus"></i>
+            </div>
+          </div>
+          <div class="p-4">
+            <h3 class="font-semibold text-gray-800 mb-1">${product.name}</h3>
+            <p class="text-sm text-gray-600 mb-3 line-clamp-2">${product.description}</p>
+            <p class="font-bold text-lg mb-3 accent-color">$${product.price.toFixed(2)}</p>
+            <div class="flex space-x-2">
+              <button class="add-to-cart-btn flex-1 py-2 px-3 btn-primary text-white text-sm font-medium rounded" data-product-id="${product.id}">
+                Add to Cart
+              </button>
+              <button class="inquiry-btn flex-1 py-2 px-3 btn-outline text-sm font-medium rounded" data-product-id="${product.id}" data-product-name="${product.name}">
+                Inquiry
+              </button>
+            </div>
+          </div>
+        `;
+        productsContainer.appendChild(productCard);
+      });
+      
+      // Initialize zoom icons
+      initZoomIcons();
+    }
+    
+    function initEventListeners() {
+      // Category tabs
+      categoryTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          categoryTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentCategory = tab.dataset.category;
+          loadProducts(currentCategory);
+        });
+      });
+      
+      // Cart toggle
+      cartButton.addEventListener('click', toggleCart);
+      closeCartButton.addEventListener('click', toggleCart);
+      overlayBg.addEventListener('click', () => {
+        toggleCart(false);
+        closeInquiryModal();
+        closeConfirmationModal();
+      });
+      
+      // Add to cart functionality - using event delegation
+      productsContainer.addEventListener('click', (e) => {
+        if (e.target.closest('.add-to-cart-btn')) {
+          const btn = e.target.closest('.add-to-cart-btn');
+          const productId = btn.dataset.productId;
+          addToCart(productId);
+        }
+        
+        if (e.target.closest('.inquiry-btn')) {
+          const btn = e.target.closest('.inquiry-btn');
+          const productId = btn.dataset.productId;
+          const productName = btn.dataset.productName;
+          openInquiryModal(productId, productName);
+        }
+      });
+      
+      // Inquiry modal
+      inquiryCloseBtns.forEach(btn => {
+        btn.addEventListener('click', closeInquiryModal);
+      });
+      
+      inquiryForm.addEventListener('submit', handleInquirySubmit);
+      
+      // Checkout button
+      checkoutBtn.addEventListener('click', processCheckout);
+      
+      // Continue shopping button
+      continueShoppingBtn.addEventListener('click', () => {
+        closeConfirmationModal();
+      });
+    }
+    
+    function initZoomIcons() {
+      document.querySelectorAll('.zoom-icon').forEach(icon => {
+        icon.addEventListener('click', (e) => {
+          const src = e.currentTarget.dataset.src;
+          const productName = e.currentTarget.dataset.productName;
+          
+          const container = document.getElementById('lightgallery-container');
+          container.innerHTML = `<a href="${src}"><img src="${src}" alt="${productName}" /></a>`;
+          
+          lightGallery(container, {
+            dynamic: true,
+            dynamicEl: [{
+              src: src,
+              thumb: src,
+              subHtml: `<h4>${productName}</h4>`
+            }],
+            download: false
+          });
+        });
+      });
+    }
+    
+    function toggleCart(open = null) {
+      const isOpen = open !== null ? open : !cartOverlay.classList.contains('open');
+      
+      if (isOpen) {
+        cartOverlay.classList.add('open');
+        overlayBg.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      } else {
+        cartOverlay.classList.remove('open');
+        overlayBg.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+    }
+    
+    function addToCart(productId) {
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+      
+      const existingItem = cart.find(item => item.id === productId);
+      
+      if (existingItem) {
+        existingItem.quantity++;
+      } else {
+        cart.push({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          quantity: 1
+        });
+      }
+      
+      // Save cart to localStorage
+      saveCart();
+      
+      // Update UI
+      updateCartUI();
+      
+      // Show notification
+      showAddedToCartNotification(product.name);
+    }
+    
+    function removeFromCart(productId) {
+      cart = cart.filter(item => item.id !== productId);
+      saveCart();
+      updateCartUI();
+    }
+    
+    function updateQuantity(productId, quantity) {
+      const item = cart.find(item => item.id === productId);
+      if (item) {
+        item.quantity = Math.max(1, quantity);
+        saveCart();
+        updateCartUI();
+      }
+    }
+    
+    function saveCart() {
+      localStorage.setItem('furniture-cart', JSON.stringify(cart));
+    }
+    
+    function loadCart() {
+      const savedCart = localStorage.getItem('furniture-cart');
+      if (savedCart) {
+        cart = JSON.parse(savedCart);
+        updateCartUI();
+      }
+    }
+    
+    function updateCartUI() {
+      // Update cart count badge
+      const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+      
+      if (totalItems > 0) {
+        cartCountBadge.textContent = totalItems;
+        cartCountBadge.classList.remove('hidden');
+        checkoutBtn.disabled = false;
+      } else {
+        cartCountBadge.classList.add('hidden');
+        checkoutBtn.disabled = true;
+      }
+      
+      // Update cart items
+      if (cart.length === 0) {
+        cartItemsContainer.innerHTML = `
+          <div class="text-center py-12 text-gray-500">
+            <i class="fas fa-shopping-cart text-4xl mb-4 opacity-30"></i>
+            <p>Your cart is empty</p>
+            <p class="text-sm mt-2">Browse our collection and add items you love</p>
+          </div>
+        `;
+      } else {
+        cartItemsContainer.innerHTML = '';
+        
+        cart.forEach(item => {
+          const cartItem = document.createElement('div');
+          cartItem.className = 'flex py-4 border-b';
+          cartItem.innerHTML = `
+            <div class="w-20 h-20 flex-shrink-0">
+              <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover rounded">
+            </div>
+            <div class="ml-4 flex-grow">
+              <h4 class="text-sm font-medium">${item.name}</h4>
+              <p class="text-accent-color font-semibold mt-1">$${item.price.toFixed(2)}</p>
+              <div class="flex items-center mt-2">
+                <button class="quantity-btn bg-gray-100 px-2 py-1 rounded-l" data-product-id="${item.id}" data-action="decrease">-</button>
+                <span class="px-3 py-1 bg-gray-100">${item.quantity}</span>
+                <button class="quantity-btn bg-gray-100 px-2 py-1 rounded-r" data-product-id="${item.id}" data-action="increase">+</button>
+              </div>
+            </div>
+            <button class="remove-item ml-2 text-gray-400 hover:text-red-500" data-product-id="${item.id}">
+              <i class="fas fa-times"></i>
+            </button>
+          `;
+          
+          cartItemsContainer.appendChild(cartItem);
+        });
+        
+        // Add event listeners for quantity buttons
+        document.querySelectorAll('.quantity-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const productId = e.target.dataset.productId;
+            const action = e.target.dataset.action;
+            const item = cart.find(item => item.id === productId);
+            
+            if (item) {
+              if (action === 'increase') {
+                updateQuantity(productId, item.quantity + 1);
+              } else if (action === 'decrease' && item.quantity > 1) {
+                updateQuantity(productId, item.quantity - 1);
+              }
+            }
+          });
+        });
+        
+        // Add event listeners for remove buttons
+        document.querySelectorAll('.remove-item').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const productId = e.target.closest('.remove-item').dataset.productId;
+            removeFromCart(productId);
+          });
+        });
+      }
+      
+      // Update subtotal
+      const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+      cartSubtotal.textContent = `$${subtotal.toFixed(2)}`;
+    }
+    
+    function showAddedToCartNotification(productName) {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-4 py-3 rounded shadow-lg z-50 transform translate-y-20 opacity-0 transition-all duration-300';
+      notification.innerHTML = `
+        <div class="flex items-center">
+          <i class="fas fa-check-circle mr-2"></i>
+          <span>${productName} added to cart</span>
+        </div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // Animate in
+      setTimeout(() => {
+        notification.classList.remove('translate-y-20', 'opacity-0');
+      }, 100);
+      
+      // Remove after delay
+      setTimeout(() => {
+        notification.classList.add('translate-y-20', 'opacity-0');
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 300);
+      }, 3000);
+    }
+    
+    function openInquiryModal(productId, productName) {
+      document.getElementById('inquiry-product-id').value = productId;
+      document.getElementById('inquiry-product-name').value = productName;
+      inquiryModal.classList.add('active');
+      overlayBg.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeInquiryModal() {
+      inquiryModal.classList.remove('active');
+      if (!cartOverlay.classList.contains('open') && !confirmationModal.classList.contains('active')) {
+        overlayBg.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+      
+      // Reset form
+      inquiryForm.reset();
+    }
+    
+    function handleInquirySubmit(e) {
+      e.preventDefault();
+      
+      // Show loading state
+      document.querySelector('.inquiry-submit-text').classList.add('hidden');
+      document.querySelector('.inquiry-loading').classList.remove('hidden');
+      
+      // Simulate submission
+      setTimeout(() => {
+        closeInquiryModal();
+        
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-4 py-3 rounded shadow-lg z-50';
+        notification.innerHTML = `
+          <div class="flex items-center">
+            <i class="fas fa-check-circle mr-2"></i>
+            <span>Your inquiry has been sent successfully!</span>
+          </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Reset loading state
+        document.querySelector('.inquiry-submit-text').classList.remove('hidden');
+        document.querySelector('.inquiry-loading').classList.add('hidden');
+        
+        // Remove notification after delay
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 5000);
+      }, 1500);
+    }
+    
+    function processCheckout() {
+      // Show loading state
+      checkoutBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Processing...';
+      checkoutBtn.disabled = true;
+      
+      // Simulate processing
+      setTimeout(() => {
+        // Prepare order details
+        let orderDetailsHTML = '';
+        cart.forEach(item => {
+          orderDetailsHTML += `
+            <div class="flex justify-between mb-2">
+              <span>${item.name} x ${item.quantity}</span>
+              <span>$${(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+          `;
+        });
+        
+        const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        orderDetailsHTML += `
+          <div class="border-t pt-2 mt-2 font-semibold flex justify-between">
+            <span>Total:</span>
+            <span>$${subtotal.toFixed(2)}</span>
+          </div>
+          <div class="text-sm text-gray-500 mt-2">
+            <p>Order #: ORD-${Math.floor(100000 + Math.random() * 900000)}</p>
+            <p>Date: ${new Date().toLocaleDateString()}</p>
+          </div>
+        `;
+        
+        orderDetailsContainer.innerHTML = orderDetailsHTML;
+        
+        // Clear cart
+        cart = [];
+        saveCart();
+        updateCartUI();
+        
+        // Close cart and show confirmation
+        toggleCart(false);
+        showConfirmationModal();
+        
+        // Reset button
+        checkoutBtn.innerHTML = 'Checkout';
+        checkoutBtn.disabled = true;
+      }, 2000);
+    }
+    
+    function showConfirmationModal() {
+      confirmationModal.classList.add('active');
+      overlayBg.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeConfirmationModal() {
+      confirmationModal.classList.remove('active');
+      overlayBg.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+  </script>
+</body>
+</html>
