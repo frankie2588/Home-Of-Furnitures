@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home of Modern Furnitures Gallery</title>
+  <title>Home of Furnitures Gallery</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/css/lightgallery.css">
@@ -238,6 +238,38 @@
       opacity: 1;
       pointer-events: all;
     }
+
+    .dot {
+      transition: transform 0.3s ease;
+    }
+
+    #test-mode:checked ~ .dot {
+      transform: translateX(0);
+    }
+
+    #test-mode:not(:checked) ~ .dot {
+      transform: translateX(16px);
+    }
+
+    /* M-Pesa specific styling */
+    .bg-mpesa {
+      background-color: #05A15F;
+    }
+
+    .text-mpesa {
+      color: #05A15F;
+    }
+
+    #mpesa-modal {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    #mpesa-modal.active {
+      opacity: 1;
+      pointer-events: all;
+    }
   </style>
 </head>
 <body>
@@ -255,7 +287,7 @@
           <button id="admin-dashboard-btn" class="mr-4 admin-btn px-3 py-1 rounded text-sm hidden">
             Dashboard
           </button>
-          <h1 class="text-2xl font-bold text-gray-800">Home of Modern Furnitures</h1>
+          <h1 class="text-2xl font-bold text-gray-800">Home of Furnitures</h1>
         </div>
         <div class="relative">
           <button id="cart-button" class="relative p-2 text-gray-700 hover:text-gray-900">
@@ -314,8 +346,27 @@
           <span>Subtotal:</span>
           <span id="cart-subtotal">$0.00</span>
         </div>
-        <button id="checkout-btn" class="w-full py-3 bg-gray-900 text-white font-semibold rounded hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-          Checkout
+        
+        <!-- Add M-Pesa payment section -->
+        <div class="mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-gray-700" for="test-mode">Test mode: Sandbox transactions only</label>
+            <div class="relative inline-block w-10 align-middle select-none">
+              <input type="checkbox" id="test-mode" checked class="sr-only">
+              <div class="block h-6 bg-gray-300 rounded-full w-10"></div>
+              <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
+            </div>
+          </div>
+          <label class="block text-gray-700 mb-2" for="mpesa-phone">Enter Safaricom phone number</label>
+          <input type="tel" id="mpesa-phone" name="phoneNumber" placeholder="e.g., 254712345678" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+          <p class="text-xs text-gray-500 mt-1">Enter your phone number starting with 254</p>
+        </div>
+        
+        <button id="checkout-btn" class="w-full py-3 bg-green-600 text-white font-semibold rounded hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+          <span class="checkout-btn-text">Pay with M-Pesa</span>
+          <span class="checkout-loading hidden">
+            <span class="loading-spinner mr-2"></span>Processing Payment...
+          </span>
         </button>
       </div>
     </div>
@@ -519,6 +570,7 @@
       <div class="flex border-b mb-4">
         <button class="admin-tab active px-4 py-2" data-tab="product-list">Products</button>
         <button class="admin-tab px-4 py-2" data-tab="add-product">Add New</button>
+        <button class="admin-tab px-4 py-2" data-tab="payments">Payments</button>
       </div>
       
       <div class="flex-grow overflow-y-auto">
@@ -590,6 +642,61 @@
             </button>
           </form>
         </div>
+        
+        <!-- Payment History Tab Content -->
+        <div id="payments-tab" class="admin-tab-content hidden">
+          <div class="mb-4 flex flex-wrap gap-2">
+            <div class="w-full md:w-1/3 pr-2">
+              <label class="block text-gray-700 text-sm mb-1" for="payment-status">Status</label>
+              <select id="payment-status" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                <option value="">All</option>
+                <option value="success">Success</option>
+                <option value="failed">Failed</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
+            <div class="w-full md:w-1/3 px-2">
+              <label class="block text-gray-700 text-sm mb-1" for="payment-phone">Phone Number</label>
+              <input type="text" id="payment-phone" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+            </div>
+            <div class="w-full md:w-1/3 pl-2">
+              <label class="block text-gray-700 text-sm mb-1">Date Range</label>
+              <div class="flex items-center gap-2">
+                <input type="date" id="payment-date-from" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                <span class="text-sm">to</span>
+                <input type="date" id="payment-date-to" class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex justify-between mb-4">
+            <button id="apply-payment-filters" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm">
+              Apply Filters
+            </button>
+            <button id="download-payments-csv" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm">
+              Download CSV
+            </button>
+          </div>
+          
+          <div class="overflow-x-auto">
+            <table class="min-w-full bg-white">
+              <thead>
+                <tr>
+                  <th class="py-2 px-3 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction ID</th>
+                  <th class="py-2 px-3 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
+                  <th class="py-2 px-3 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
+                  <th class="py-2 px-3 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount (KSh)</th>
+                  <th class="py-2 px-3 border-b text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody id="payment-history-table">
+                <tr>
+                  <td colspan="5" class="py-4 text-center text-gray-500">Loading payment history...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
       
       <div class="mt-auto pt-4 border-t">
@@ -603,10 +710,31 @@
   <!-- Lightgallery container for image zoom -->
   <div id="lightgallery-container"></div>
   
+  <!-- M-Pesa Payment Modal -->
+  <div id="mpesa-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+      <div class="p-6 text-center">
+        <div class="w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-full bg-green-100">
+          <i class="fas fa-mobile-alt text-green-500 text-2xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">M-Pesa Payment</h3>
+        <p class="text-gray-600 mb-6" id="mpesa-modal-message">
+          An STK push has been sent to your phone. Please complete the payment.
+        </p>
+        <div class="p-4 bg-gray-50 rounded-lg mb-6">
+          <div class="loading-spinner mx-auto mb-4"></div>
+          <p class="text-sm text-gray-500">Waiting for payment confirmation...</p>
+        </div>
+        <button id="mpesa-cancel-btn" class="px-6 py-2 border border-gray-300 rounded mr-2">Cancel</button>
+        <button id="mpesa-check-status-btn" class="px-6 py-2 bg-green-600 text-white rounded">Check Status</button>
+      </div>
+    </div>
+  </div>
+  
   <footer class="bg-gray-100 mt-16">
     <div class="container mx-auto px-4 py-8">
       <div class="text-center text-gray-600">
-        <p>&copy; 2025 Home of Modern Furnitures. All rights reserved.</p>
+        <p>&copy; 2025 Home of Furnitures. All rights reserved.</p>
       </div>
     </div>
   </footer>
@@ -615,1212 +743,1017 @@
   <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/lightgallery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/plugins/zoom/lg-zoom.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/plugins/thumbnail/lg-thumbnail.min.js"></script>
-  <script id="app-script">
-    // Product data (simulating API response)
-    let products = [
-      // Sofas
-      {
-        id: 'sofa-1',
-        name: 'Modern Sectional Sofa',
-        category: 'sofas',
-        price: 1299.99,
-        description: 'Spacious L-shaped sectional sofa with plush cushions and durable fabric.',
-        image: 'https://cdn.pixabay.com/photo/2017/09/09/18/25/living-room-2732939_1280.jpg'
-      },
-      {
-        id: 'sofa-2',
-        name: 'Classic 3-Seater Sofa',
-        category: 'sofas',
-        price: 899.99,
-        description: 'Elegant design with comfortable padding and solid wood frame.',
-        image: 'https://cdn.pixabay.com/photo/2017/03/19/01/43/living-room-2155376_1280.jpg'
-      },
-      {
-        id: 'sofa-3',
-        name: 'Recliner Loveseat',
-        category: 'sofas',
-        price: 1199.99,
-        description: 'Dual reclining seats with premium leather upholstery.',
-        image: 'https://cdn.pixabay.com/photo/2019/04/23/05/37/living-room-4148853_1280.jpg'
-      },
-      {
-        id: 'sofa-4',
-        name: 'Sleeper Sofa',
-        category: 'sofas',
-        price: 1499.99,
-        description: 'Convertible sofa that transforms into a comfortable queen-size bed.',
-        image: 'https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923_1280.jpg'
-      },
-      // Beds
-      {
-        id: 'bed-1',
-        name: 'King Size Platform Bed',
-        category: 'beds',
-        price: 1499.99,
-        description: 'Modern platform bed with headboard and wood frame.',
-        image: 'https://cdn.pixabay.com/photo/2016/11/19/13/06/bed-1839183_1280.jpg'
-      },
-      {
-        id: 'bed-2',
-        name: 'Queen Size Canopy Bed',
-        category: 'beds',
-        price: 1299.99,
-        description: 'Elegant four-poster canopy bed with metal frame.',
-        image: 'https://cdn.pixabay.com/photo/2016/07/26/16/16/bedroom-1543493_1280.jpg'
-      },
-      {
-        id: 'bed-3',
-        name: 'Single Bed with Storage',
-        category: 'beds',
-        price: 699.99,
-        description: 'Practical single bed with drawers for efficient storage.',
-        image: 'https://cdn.pixabay.com/photo/2019/12/02/11/23/bedroom-4667665_1280.jpg'
-      },
-      // Office Chairs
-      {
-        id: 'chair-1',
-        name: 'Executive Office Chair',
-        category: 'office-chairs',
-        price: 349.99,
-        description: 'Premium leather chair with adjustable height and lumbar support.',
-        image: 'https://cdn.pixabay.com/photo/2017/08/02/01/31/chair-2569274_1280.jpg'
-      },
-      {
-        id: 'chair-2',
-        name: 'Ergonomic Mesh Chair',
-        category: 'office-chairs',
-        price: 249.99,
-        description: 'Breathable mesh back with ergonomic design for all-day comfort.',
-        image: 'https://cdn.pixabay.com/photo/2020/04/03/07/09/office-chair-4997549_1280.jpg'
-      },
-      {
-        id: 'chair-3',
-        name: 'Visitor Conference Chair',
-        category: 'office-chairs',
-        price: 179.99,
-        description: 'Stackable meeting room chair with padded seat and back.',
-        image: 'https://cdn.pixabay.com/photo/2014/11/06/22/16/chair-519011_1280.jpg'
-      },
-      // Baby Beds
-      {
-        id: 'babybed-1',
-        name: 'Convertible Baby Crib',
-        category: 'baby-beds',
-        price: 399.99,
-        description: '3-in-1 crib that converts to toddler bed and daybed.',
-        image: 'https://cdn.pixabay.com/photo/2019/03/20/06/14/nursery-4067447_1280.jpg'
-      },
-      {
-        id: 'babybed-2',
-        name: 'Toddler Race Car Bed',
-        category: 'baby-beds',
-        price: 299.99,
-        description: 'Fun race car design perfect for transitioning from crib to bed.',
-        image: 'https://cdn.pixabay.com/photo/2017/07/21/22/11/kids-room-2527378_1280.jpg'
-      },
-      // Office Tables
-      {
-        id: 'table-1',
-        name: 'Executive L-Shaped Desk',
-        category: 'office-tables',
-        price: 549.99,
-        description: 'Spacious L-shaped design with built-in storage and cable management.',
-        image: 'https://cdn.pixabay.com/photo/2021/01/24/11/34/home-office-5945001_1280.jpg'
-      },
-      {
-        id: 'table-2',
-        name: 'Standing Desk',
-        category: 'office-tables',
-        price: 649.99,
-        description: 'Adjustable height desk for sitting or standing work positions.',
-        image: 'https://cdn.pixabay.com/photo/2017/02/24/02/37/home-office-2093647_1280.jpg'
-      },
-      {
-        id: 'table-3',
-        name: 'Student Study Desk',
-        category: 'office-tables',
-        price: 249.99,
-        description: 'Compact desk with bookshelf and drawer for efficient studying.',
-        image: 'https://cdn.pixabay.com/photo/2020/10/24/17/17/workplace-5682031_1280.jpg'
-      }
-    ];
+  ```html
+<script id="app-script">
+  // Product data (simulating API response)
+  let products = [
+    // Sofas
+    { id: 'sofa-1', name: 'Modern Sectional Sofa', category: 'sofas', price: 1299.99, description: 'Spacious L-shaped sectional sofa with plush cushions and durable fabric.', image: 'https://cdn.pixabay.com/photo/2017/09/09/18/25/living-room-2732939_1280.jpg' },
+    { id: 'sofa-2', name: 'Classic 3-Seater Sofa', category: 'sofas', price: 899.99, description: 'Elegant design with comfortable padding and solid wood frame.', image: 'https://cdn.pixabay.com/photo/2017/03/19/01/43/living-room-2155376_1280.jpg' },
+    { id: 'sofa-3', name: 'Recliner Loveseat', category: 'sofas', price: 1199.99, description: 'Dual reclining seats with premium leather upholstery.', image: 'https://cdn.pixabay.com/photo/2019/04/23/05/37/living-room-4148853_1280.jpg' },
+    { id: 'sofa-4', name: 'Sleeper Sofa', category: 'sofas', price: 1499.99, description: 'Convertible sofa that transforms into a comfortable queen-size bed.', image: 'https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923_1280.jpg' },
+    // Beds
+    { id: 'bed-1', name: 'King Size Platform Bed', category: 'beds', price: 1499.99, description: 'Modern platform bed with headboard and wood frame.', image: 'https://cdn.pixabay.com/photo/2016/11/19/13/06/bed-1839183_1280.jpg' },
+    { id: 'bed-2', name: 'Queen Size Canopy Bed', category: 'beds', price: 1299.99, description: 'Elegant four-poster canopy bed with metal frame.', image: 'https://cdn.pixabay.com/photo/2016/07/26/16/16/bedroom-1543493_1280.jpg' },
+    { id: 'bed-3', name: 'Single Bed with Storage', category: 'beds', price: 699.99, description: 'Practical single bed with drawers for efficient storage.', image: 'https://cdn.pixabay.com/photo/2019/12/02/11/23/bedroom-4667665_1280.jpg' },
+    // Office Chairs
+    { id: 'chair-1', name: 'Executive Office Chair', category: 'office-chairs', price: 349.99, description: 'Premium leather chair with adjustable height and lumbar support.', image: 'https://cdn.pixabay.com/photo/2017/08/02/01/31/chair-2569274_1280.jpg' },
+    { id: 'chair-2', name: 'Ergonomic Mesh Chair', category: 'office-chairs', price: 249.99, description: 'Breathable mesh back with ergonomic design for all-day comfort.', image: 'https://cdn.pixabay.com/photo/2020/04/03/07/09/office-chair-4997549_1280.jpg' },
+    { id: 'chair-3', name: 'Visitor Conference Chair', category: 'office-chairs', price: 179.99, description: 'Stackable meeting room chair with padded seat and back.', image: 'https://cdn.pixabay.com/photo/2014/11/06/22/16/chair-519011_1280.jpg' },
+    // Baby Beds
+    { id: 'babybed-1', name: 'Convertible Baby Crib', category: 'baby-beds', price: 399.99, description: '3-in-1 crib that converts to toddler bed and daybed.', image: 'https://cdn.pixabay.com/photo/2019/03/20/06/14/nursery-4067447_1280.jpg' },
+    { id: 'babybed-2', name: 'Toddler Race Car Bed', category: 'baby-beds', price: 299.99, description: 'Fun race car design perfect for transitioning from crib to bed.', image: 'https://cdn.pixabay.com/photo/2017/07/21/22/11/kids-room-2527378_1280.jpg' },
+    // Office Tables
+    { id: 'table-1', name: 'Executive L-Shaped Desk', category: 'office-tables', price: 549.99, description: 'Spacious L-shaped design with built-in storage and cable management.', image: 'https://cdn.pixabay.com/photo/2021/01/24/11/34/home-office-5945001_1280.jpg' },
+    { id: 'table-2', name: 'Standing Desk', category: 'office-tables', price: 649.99, description: 'Adjustable height desk for sitting or standing work positions.', image: 'https://cdn.pixabay.com/photo/2017/02/24/02/37/home-office-2093647_1280.jpg' },
+    { id: 'table-3', name: 'Student Study Desk', category: 'office-tables', price: 249.99, description: 'Compact desk with bookshelf and drawer for efficient studying.', image: 'https://cdn.pixabay.com/photo/2020/10/24/17/17/workplace-5682031_1280.jpg' }
+  ];
 
-    // DOM elements
-    const productsContainer = document.getElementById('products-container');
-    const categoryTabs = document.querySelectorAll('.tab');
-    const cartButton = document.getElementById('cart-button');
-    const cartOverlay = document.getElementById('cart-overlay');
-    const closeCartButton = document.getElementById('close-cart');
-    const overlayBg = document.getElementById('overlay-bg');
-    const cartItemsContainer = document.getElementById('cart-items');
-    const cartCountBadge = document.getElementById('cart-count');
-    const cartSubtotal = document.getElementById('cart-subtotal');
-    const checkoutBtn = document.getElementById('checkout-btn');
-    const inquiryModal = document.getElementById('inquiry-modal');
-    const inquiryForm = document.getElementById('inquiry-form');
-    const inquiryCloseBtns = document.querySelectorAll('.inquiry-close');
-    const confirmationModal = document.getElementById('confirmation-modal');
-    const continueShoppingBtn = document.getElementById('continue-shopping');
-    const orderDetailsContainer = document.getElementById('order-details');
-    const loginModal = document.getElementById('login-modal');
-    const loginForm = document.getElementById('login-form');
-    const loginCloseBtn = document.querySelector('.login-close');
-    const adminDashboard = document.getElementById('admin-dashboard');
-    const closeDashboardBtn = document.getElementById('close-dashboard');
-    const adminLogoutBtn = document.getElementById('admin-logout');
-    const adminTabs = document.querySelectorAll('.admin-tab');
-    const adminTabContents = document.querySelectorAll('.admin-tab-content');
-    const adminProductsContainer = document.getElementById('admin-products-container');
-    const productSearch = document.getElementById('product-search');
-    const productForm = document.getElementById('product-form');
-    const editProductId = document.getElementById('edit-product-id');
-    const productName = document.getElementById('product-name');
-    const productCategory = document.getElementById('product-category');
-    const productPrice = document.getElementById('product-price');
-    const productDescription = document.getElementById('product-description');
-    const productImage = document.getElementById('product-image');
-    const previewImage = document.getElementById('preview-image');
-    const uploadImageButton = document.getElementById('upload-image-btn');
-    const saveButton = document.getElementById('save-button-text');
-    const productSaving = document.querySelector('.product-saving');
-    const imagePreview = document.getElementById('image-preview');
+  // DOM elements
+  const productsContainer = document.getElementById('products-container');
+  const categoryTabs = document.querySelectorAll('.tab');
+  const cartButton = document.getElementById('cart-button');
+  const cartOverlay = document.getElementById('cart-overlay');
+  const closeCartButton = document.getElementById('close-cart');
+  const overlayBg = document.getElementById('overlay-bg');
+  const cartItemsContainer = document.getElementById('cart-items');
+  const cartCountBadge = document.getElementById('cart-count');
+  const cartSubtotal = document.getElementById('cart-subtotal');
+  const checkoutBtn = document.getElementById('checkout-btn');
+  const inquiryModal = document.getElementById('inquiry-modal');
+  const inquiryForm = document.getElementById('inquiry-form');
+  const inquiryCloseBtns = document.querySelectorAll('.inquiry-close');
+  const confirmationModal = document.getElementById('confirmation-modal');
+  const continueShoppingBtn = document.getElementById('continue-shopping');
+  const orderDetailsContainer = document.getElementById('order-details');
+  const loginModal = document.getElementById('login-modal');
+  const loginForm = document.getElementById('login-form');
+  const loginCloseBtn = document.querySelector('.login-close');
+  const adminDashboard = document.getElementById('admin-dashboard');
+  const closeDashboardBtn = document.getElementById('close-dashboard');
+  const adminLogoutBtn = document.getElementById('admin-logout');
+  const adminTabs = document.querySelectorAll('.admin-tab');
+  const adminTabContents = document.querySelectorAll('.admin-tab-content');
+  const adminProductsContainer = document.getElementById('admin-products-container');
+  const productSearch = document.getElementById('product-search');
+  const productForm = document.getElementById('product-form');
+  const editProductId = document.getElementById('edit-product-id');
+  const productName = document.getElementById('product-name');
+  const productCategory = document.getElementById('product-category');
+  const productPrice = document.getElementById('product-price');
+  const productDescription = document.getElementById('product-description');
+  const productImage = document.getElementById('product-image');
+  const previewImage = document.getElementById('preview-image');
+  const uploadImageButton = document.getElementById('upload-image-btn');
+  const saveButton = document.getElementById('save-button-text');
+  const productSaving = document.querySelector('.product-saving');
+  const imagePreview = document.getElementById('image-preview');
 
-    // State
-    let currentCategory = 'all';
-    let cart = [];
-    let isAdmin = false;
-    let productImageFile = null;
-    
-    // Initialize
-    document.addEventListener('DOMContentLoaded', async () => {
-      // Try to load products from API
-      const apiProducts = await loadProductsFromAPI();
-      if (apiProducts) {
-        products = apiProducts;
-      }
-      
-      // Check if user is admin
-      if (localStorage.getItem('isAdmin') === 'true') {
-        isAdmin = true;
-        updateAdminUI();
-      }
-      
-      loadProducts(currentCategory);
-      loadCart();
-      initEventListeners();
-    });
+  // State
+  let currentCategory = 'all';
+  let cart = [];
+  let isAdmin = false;
+  let productImageFile = null;
 
-    // Functions
-    async function loadProductsFromAPI() {
-      try {
-        const response = await fetch('https://magicloops.dev/api/loop/5229903f-bd6c-48a6-a350-4ad45b572461/run', {
-          method: 'POST',
-          body: JSON.stringify({}),
-        });
-        
-        const data = await response.json();
-        if (data && Array.isArray(data) && data.length > 0) {
-          return data;
-        }
-        return products; // Use default products if API fails
-      } catch (error) {
-        console.error('Error loading products:', error);
-        return products; // Use default products on error
-      }
-    }
-    
-    async function saveProductsToAPI(productsData) {
-      try {
-        // This would be replaced with your actual Loop API for saving data
-        const response = await fetch('https://magicloops.dev/api/loop/admin-save-products/run', {
-          method: 'POST',
-          body: JSON.stringify({ products: productsData }),
-        });
-        
-        return await response.json();
-      } catch (error) {
-        console.error('Error saving products:', error);
-        // Still save to localStorage as fallback
-        localStorage.setItem('furniture-products', JSON.stringify(productsData));
-        return { success: false, error: error.message };
-      }
+  // Initialize
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Try to load products from API
+    const apiProducts = await loadProductsFromAPI();
+    if (apiProducts) {
+      products = apiProducts;
     }
 
-    function showLoginModal() {
-      const loginModal = document.getElementById('login-modal');
-      loginModal.classList.add('active');
-      overlayBg.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeLoginModal() {
-      const loginModal = document.getElementById('login-modal');
-      loginModal.classList.remove('active');
-      overlayBg.classList.add('hidden');
-      document.body.style.overflow = '';
-      
-      // Reset form
-      document.getElementById('login-form').reset();
-    }
-
-    function handleLogin(e) {
-      e.preventDefault();
-      
-      // Show loading state
-      document.querySelector('.login-submit-text').classList.add('hidden');
-      document.querySelector('.login-loading').classList.remove('hidden');
-      
-      const username = document.getElementById('login-username').value;
-      const password = document.getElementById('login-password').value;
-      
-      // Mock authentication - in a real app, this would be a server call
-      setTimeout(() => {
-        if (username === 'admin' && password === 'password') {
-          // Set admin flag
-          isAdmin = true;
-          localStorage.setItem('isAdmin', 'true');
-          
-          // Update UI
-          updateAdminUI();
-          
-          // Close modal
-          closeLoginModal();
-          
-          // Show success notification
-          showNotification('Logged in successfully as admin');
-        } else {
-          // Show error message
-          showNotification('Invalid username or password', 'error');
-        }
-        
-        // Reset loading state
-        document.querySelector('.login-submit-text').classList.remove('hidden');
-        document.querySelector('.login-loading').classList.add('hidden');
-      }, 1000);
-    }
-
-    function handleLogout() {
-      isAdmin = false;
-      localStorage.removeItem('isAdmin');
+    // Check if user is admin
+    if (localStorage.getItem('isAdmin') === 'true') {
+      isAdmin = true;
       updateAdminUI();
-      closeAdminDashboard();
-      showNotification('Logged out successfully');
     }
 
-    function updateAdminUI() {
-      const dashboardBtn = document.getElementById('admin-dashboard-btn');
-      const loginBtn = document.getElementById('admin-login-btn');
-      
-      if (isAdmin) {
-        dashboardBtn.classList.remove('hidden');
-        loginBtn.classList.add('hidden');
-      } else {
-        dashboardBtn.classList.add('hidden');
-        loginBtn.classList.remove('hidden');
-      }
-    }
+    loadProducts(currentCategory);
+    loadCart();
+    initEventListeners();
 
-    function toggleAdminDashboard() {
-      const dashboard = document.getElementById('admin-dashboard');
-      const isOpen = dashboard.classList.contains('translate-x-0');
-      
-      if (isOpen) {
-        closeAdminDashboard();
-      } else {
-        openAdminDashboard();
-      }
-    }
-
-    function openAdminDashboard() {
-      const dashboard = document.getElementById('admin-dashboard');
-      dashboard.classList.remove('-translate-x-full');
-      dashboard.classList.add('translate-x-0');
-      overlayBg.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-      
-      // Load products into admin view
-      loadAdminProducts();
-    }
-
-    function closeAdminDashboard() {
-      const dashboard = document.getElementById('admin-dashboard');
-      dashboard.classList.remove('translate-x-0');
-      dashboard.classList.add('-translate-x-full');
-      overlayBg.classList.add('hidden');
-      document.body.style.overflow = '';
-      
-      // Reset product form
-      resetProductForm();
-    }
-
-    function loadAdminProducts() {
-      const container = document.getElementById('admin-products-container');
-      container.innerHTML = `
-        <div class="text-center py-8">
-          <div class="loading-spinner mx-auto mb-4"></div>
-          <p class="text-gray-600">Loading products...</p>
-        </div>
-      `;
-      
-      // Simulate loading
-      setTimeout(() => {
-        container.innerHTML = '';
-        
-        products.forEach(product => {
-          const productItem = document.createElement('div');
-          productItem.className = 'admin-product-item border rounded p-3 flex items-center';
-          productItem.innerHTML = `
-            <div class="w-16 h-16 flex-shrink-0">
-              <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover rounded">
-            </div>
-            <div class="ml-4 flex-grow">
-              <h4 class="font-medium">${product.name}</h4>
-              <p class="text-sm text-gray-500">${product.category} - ${formatKES(product.price)}</p>
-            </div>
-            <div class="flex space-x-2">
-              <button class="edit-product-btn px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200" data-product-id="${product.id}">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button class="delete-product-btn px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200" data-product-id="${product.id}">
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
-          `;
-          container.appendChild(productItem);
-        });
-        
-        // Add event listeners for edit and delete buttons
-        addAdminProductEventListeners();
-      }, 800);
-    }
-
-    function addAdminProductEventListeners() {
-      // Edit button listeners
-      document.querySelectorAll('.edit-product-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const productId = e.currentTarget.dataset.productId;
-          editProduct(productId);
-        });
-      });
-      
-      // Delete button listeners
-      document.querySelectorAll('.delete-product-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const productId = e.currentTarget.dataset.productId;
-          deleteProduct(productId);
-        });
-      });
-    }
-
-    function editProduct(productId) {
-      const product = products.find(p => p.id === productId);
-      if (!product) return;
-      
-      // Switch to add product tab
-      document.querySelector('.admin-tab[data-tab="add-product"]').click();
-      
-      // Fill form with product data
-      document.getElementById('edit-product-id').value = product.id;
-      document.getElementById('product-name').value = product.name;
-      document.getElementById('product-category').value = product.category;
-      document.getElementById('product-price').value = product.price;
-      document.getElementById('product-description').value = product.description;
-      
-      // Show image preview
-      document.getElementById('preview-image').src = product.image;
-      document.getElementById('image-preview').classList.remove('hidden');
-      
-      // Update button text
-      document.getElementById('save-button-text').textContent = 'Update Product';
-    }
-
-    function deleteProduct(productId) {
-      if (confirm('Are you sure you want to delete this product?')) {
-        // Remove product from array
-        const index = products.findIndex(p => p.id === productId);
-        if (index !== -1) {
-          products.splice(index, 1);
-          
-          // Save to API/localStorage
-          saveProductsToAPI(products).then(() => {
-            // Reload admin products list
-            loadAdminProducts();
-            
-            // Reload catalog
-            loadProducts(currentCategory);
-            
-            // Show notification
-            showNotification('Product deleted successfully');
-          });
-        }
-      }
-    }
-
-    function handleProductFormSubmit(e) {
-      e.preventDefault();
-      
-      // Show loading state
-      document.getElementById('save-button-text').classList.add('hidden');
-      document.querySelector('.product-saving').classList.remove('hidden');
-      
-      // Get form data
-      const editId = document.getElementById('edit-product-id').value;
-      const name = document.getElementById('product-name').value;
-      const category = document.getElementById('product-category').value;
-      const price = parseFloat(document.getElementById('product-price').value);
-      const description = document.getElementById('product-description').value;
-      
-      // Validate image for new products
-      const imagePreview = document.getElementById('preview-image').src;
-      if (!editId && !imagePreview) {
-        alert('Please select an image for the product');
-        document.getElementById('save-button-text').classList.remove('hidden');
-        document.querySelector('.product-saving').classList.add('hidden');
-        return;
-      }
-      
-      // Simulate processing/upload
-      setTimeout(() => {
-        // Prepare product data
-        const image = imagePreview || 'https://via.placeholder.com/300';
-        
-        if (editId) {
-          // Update existing product
-          const productIndex = products.findIndex(p => p.id === editId);
-          if (productIndex !== -1) {
-            products[productIndex] = {
-              ...products[productIndex],
-              name,
-              category,
-              price,
-              description,
-              image: imagePreview || products[productIndex].image
-            };
-          }
+    // Test mode toggle styling
+    const testModeCheckbox = document.getElementById('test-mode');
+    if (testModeCheckbox) {
+      testModeCheckbox.addEventListener('change', function() {
+        const dot = this.nextElementSibling.nextElementSibling;
+        if (this.checked) {
+          dot.classList.remove('translate-x-4');
+          this.nextElementSibling.classList.remove('bg-green-600');
         } else {
-          // Add new product
-          const newId = 'product-' + Date.now();
-          products.push({
-            id: newId,
-            name,
-            category,
-            price,
-            description,
-            image
-          });
-        }
-        
-        // Save to API/localStorage
-        saveProductsToAPI(products).then(() => {
-          // Reset form
-          resetProductForm();
-          
-          // Go back to product list
-          document.querySelector('.admin-tab[data-tab="product-list"]').click();
-          
-          // Reload admin products list
-          loadAdminProducts();
-          
-          // Reload catalog
-          loadProducts(currentCategory);
-          
-          // Show notification
-          showNotification(editId ? 'Product updated successfully' : 'New product added successfully');
-          
-          // Reset loading state
-          document.getElementById('save-button-text').classList.remove('hidden');
-          document.querySelector('.product-saving').classList.add('hidden');
-        });
-      }, 1500);
-    }
-
-    function resetProductForm() {
-      document.getElementById('product-form').reset();
-      document.getElementById('edit-product-id').value = '';
-      document.getElementById('image-preview').classList.add('hidden');
-      document.getElementById('save-button-text').textContent = 'Add Product';
-      productImageFile = null;
-    }
-
-    function handleImageUpload(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      // Check if file is an image
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
-        return;
-      }
-      
-      // Store file for later use
-      productImageFile = file;
-      
-      // Show preview
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        document.getElementById('preview-image').src = event.target.result;
-        document.getElementById('image-preview').classList.remove('hidden');
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function showNotification(message, type = 'success') {
-      // Create notification element
-      const notification = document.createElement('div');
-      notification.className = `fixed bottom-4 right-4 px-4 py-3 rounded shadow-lg z-50 transform translate-y-20 opacity-0 transition-all duration-300 ${
-        type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-      }`;
-      notification.innerHTML = `
-        <div class="flex items-center">
-          <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>
-          <span>${message}</span>
-        </div>
-      `;
-      
-      document.body.appendChild(notification);
-      
-      // Animate in
-      setTimeout(() => {
-        notification.classList.remove('translate-y-20', 'opacity-0');
-      }, 100);
-      
-      // Remove after delay
-      setTimeout(() => {
-        notification.classList.add('translate-y-20', 'opacity-0');
-        setTimeout(() => {
-          document.body.removeChild(notification);
-        }, 300);
-      }, 3000);
-    }
-
-    function loadProducts(category) {
-      // Clear container and show loading
-      productsContainer.innerHTML = `
-        <div class="col-span-full text-center py-16">
-          <div class="loading-spinner mx-auto mb-4"></div>
-          <p class="text-gray-600">Loading products...</p>
-        </div>
-      `;
-      
-      // Simulate loading
-      setTimeout(() => {
-        const filteredProducts = category === 'all' 
-          ? products 
-          : products.filter(product => product.category === category);
-          
-        renderProducts(filteredProducts);
-      }, 800);
-    }
-    
-    function renderProducts(productsList) {
-      if (productsList.length === 0) {
-        productsContainer.innerHTML = `
-          <div class="col-span-full text-center py-16">
-            <p class="text-gray-500">No products found in this category.</p>
-          </div>
-        `;
-        return;
-      }
-      
-      productsContainer.innerHTML = '';
-      
-      productsList.forEach(product => {
-        const productCard = document.createElement('div');
-        productCard.className = 'product-card bg-white rounded-lg overflow-hidden shadow-md';
-        productCard.innerHTML = `
-          <div class="product-image-container">
-            <img src="${product.image}" alt="${product.name}" class="product-image">
-            <div class="zoom-icon" data-src="${product.image}" data-product-name="${product.name}">
-              <i class="fas fa-search-plus"></i>
-            </div>
-          </div>
-          <div class="p-4">
-            <h3 class="font-semibold text-gray-800 mb-1">${product.name}</h3>
-            <p class="text-sm text-gray-600 mb-3 line-clamp-2">${product.description}</p>
-            <p class="font-bold text-lg mb-3 accent-color">${formatKES(product.price)}</p>
-            <div class="flex space-x-2">
-              <button class="add-to-cart-btn flex-1 py-2 px-3 btn-primary text-white text-sm font-medium rounded" data-product-id="${product.id}">
-                Add to Cart
-              </button>
-              <button class="inquiry-btn flex-1 py-2 px-3 btn-outline text-sm font-medium rounded" data-product-id="${product.id}" data-product-name="${product.name}">
-                Inquiry
-              </button>
-            </div>
-          </div>
-        `;
-        productsContainer.appendChild(productCard);
-      });
-      
-      // Initialize zoom icons
-      initZoomIcons();
-    }
-    
-    function initEventListeners() {
-      // Category tabs
-      categoryTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          categoryTabs.forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          currentCategory = tab.dataset.category;
-          loadProducts(currentCategory);
-        });
-      });
-      
-      // Cart toggle
-      cartButton.addEventListener('click', toggleCart);
-      closeCartButton.addEventListener('click', toggleCart);
-      overlayBg.addEventListener('click', () => {
-        toggleCart(false);
-        closeInquiryModal();
-        closeConfirmationModal();
-      });
-      
-      // Add to cart functionality - using event delegation
-      productsContainer.addEventListener('click', (e) => {
-        if (e.target.closest('.add-to-cart-btn')) {
-          const btn = e.target.closest('.add-to-cart-btn');
-          const productId = btn.dataset.productId;
-          addToCart(productId);
-        }
-        
-        if (e.target.closest('.inquiry-btn')) {
-          const btn = e.target.closest('.inquiry-btn');
-          const productId = btn.dataset.productId;
-          const productName = btn.dataset.productName;
-          openInquiryModal(productId, productName);
+          dot.classList.add('translate-x-4');
+          this.nextElementSibling.classList.add('bg-green-600');
         }
       });
-      
-      // Inquiry modal
-      inquiryCloseBtns.forEach(btn => {
-        btn.addEventListener('click', closeInquiryModal);
-      });
-      
-      inquiryForm.addEventListener('submit', handleInquirySubmit);
-      
-      // Checkout button
-      checkoutBtn.addEventListener('click', processCheckout);
-      
-      // Continue shopping button
-      continueShoppingBtn.addEventListener('click', () => {
-        closeConfirmationModal();
-      });
-      
-      // Admin login button
-      document.getElementById('admin-login-btn').addEventListener('click', showLoginModal);
-      
-      // Login form
-      document.getElementById('login-form').addEventListener('submit', handleLogin);
-      document.querySelector('.login-close').addEventListener('click', closeLoginModal);
-      
-      // Admin dashboard button
-      document.getElementById('admin-dashboard-btn').addEventListener('click', toggleAdminDashboard);
-      document.getElementById('close-dashboard').addEventListener('click', closeAdminDashboard);
-      
-      // Admin logout button
-      document.getElementById('admin-logout').addEventListener('click', handleLogout);
-      
-      // Admin tabs
-      document.querySelectorAll('.admin-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          
-          const tabId = tab.dataset.tab;
-          document.querySelectorAll('.admin-tab-content').forEach(content => {
-            content.classList.add('hidden');
-          });
-          document.getElementById(`${tabId}-tab`).classList.remove('hidden');
-        });
-      });
-      
-      // Product image upload button
-      document.getElementById('upload-image-btn').addEventListener('click', () => {
-        document.getElementById('product-image').click();
-      });
-      
-      document.getElementById('product-image').addEventListener('change', handleImageUpload);
-      
-      // Product form
-      document.getElementById('product-form').addEventListener('submit', handleProductFormSubmit);
-      
-      // Product search
-      document.getElementById('product-search').addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        document.querySelectorAll('.admin-product-item').forEach(item => {
-          const productName = item.querySelector('h4').textContent.toLowerCase();
-          if (productName.includes(searchTerm)) {
-            item.classList.remove('hidden');
-          } else {
-            item.classList.add('hidden');
-          }
-        });
-      });
-      
-      // Initialize account modal
-      initAccountModal();
     }
-    
-    function initZoomIcons() {
-      document.querySelectorAll('.zoom-icon').forEach(icon => {
-        icon.addEventListener('click', (e) => {
-          const src = e.currentTarget.dataset.src;
-          const productName = e.currentTarget.dataset.productName;
-          
-          const container = document.getElementById('lightgallery-container');
-          container.innerHTML = `<a href="${src}"><img src="${src}" alt="${productName}" /></a>`;
-          
-          lightGallery(container, {
-            dynamic: true,
-            dynamicEl: [{
-              src: src,
-              thumb: src,
-              subHtml: `<h4>${productName}</h4>`
-            }],
-            download: false
-          });
-        });
+
+    // Admin payment history tab
+    const applyFiltersBtn = document.getElementById('apply-payment-filters');
+    if (applyFiltersBtn) {
+      applyFiltersBtn.addEventListener('click', loadPaymentHistory);
+    }
+    const downloadCsvBtn = document.getElementById('download-payments-csv');
+    if (downloadCsvBtn) {
+      downloadCsvBtn.addEventListener('click', downloadPaymentsCSV);
+    }
+
+    // Add event listener for payments tab
+    const paymentsTabBtn = document.querySelector('.admin-tab[data-tab="payments"]');
+    if (paymentsTabBtn) {
+      paymentsTabBtn.addEventListener('click', () => {
+        loadPaymentHistory();
       });
     }
-    
-    function toggleCart(open = null) {
-      const isOpen = open !== null ? open : !cartOverlay.classList.contains('open');
-      
-      if (isOpen) {
-        cartOverlay.classList.add('open');
-        overlayBg.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-      } else {
-        cartOverlay.classList.remove('open');
-        overlayBg.classList.add('hidden');
-        document.body.style.overflow = '';
+  });
+
+  // Functions
+  async function loadProductsFromAPI() {
+    try {
+      const response = await fetch('https://magicloops.dev/api/loop/5229903f-bd6c-48a6-a350-4ad45b572461/run', {
+        method: 'POST',
+        body: JSON.stringify({}),
+      });
+      const data = await response.json();
+      if (data && Array.isArray(data) && data.length > 0) {
+        return data;
       }
+      return products;
+    } catch (error) {
+      console.error('Error loading products:', error);
+      return products;
     }
-    
-    function addToCart(productId) {
-      const product = products.find(p => p.id === productId);
-      if (!product) return;
-      
-      const existingItem = cart.find(item => item.id === productId);
-      
-      if (existingItem) {
-        existingItem.quantity++;
-      } else {
-        cart.push({
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          quantity: 1
-        });
-      }
-      
-      // Save cart to localStorage
-      saveCart();
-      
-      // Update UI
-      updateCartUI();
-      
-      // Show notification
-      showAddedToCartNotification(product.name);
-    }
-    
-    function removeFromCart(productId) {
-      cart = cart.filter(item => item.id !== productId);
-      saveCart();
-      updateCartUI();
-    }
-    
-    function updateQuantity(productId, quantity) {
-      const item = cart.find(item => item.id === productId);
-      if (item) {
-        item.quantity = Math.max(1, quantity);
-        saveCart();
-        updateCartUI();
-      }
-    }
-    
-    function saveCart() {
-      localStorage.setItem('furniture-cart', JSON.stringify(cart));
-    }
-    
-    function loadCart() {
-      const savedCart = localStorage.getItem('furniture-cart');
-      if (savedCart) {
-        cart = JSON.parse(savedCart);
-        updateCartUI();
-      }
-    }
-    
-    function updateCartUI() {
-      // Update cart count badge
-      const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
-      
-      if (totalItems > 0) {
-        cartCountBadge.textContent = totalItems;
-        cartCountBadge.classList.remove('hidden');
-        checkoutBtn.disabled = false;
-      } else {
-        cartCountBadge.classList.add('hidden');
-        checkoutBtn.disabled = true;
-      }
-      
-      // Update cart items
-      if (cart.length === 0) {
-        cartItemsContainer.innerHTML = `
-          <div class="text-center py-12 text-gray-500">
-            <i class="fas fa-shopping-cart text-4xl mb-4 opacity-30"></i>
-            <p>Your cart is empty</p>
-            <p class="text-sm mt-2">Browse our collection and add items you love</p>
-          </div>
-        `;
-      } else {
-        cartItemsContainer.innerHTML = '';
-        
-        cart.forEach(item => {
-          const cartItem = document.createElement('div');
-          cartItem.className = 'flex py-4 border-b';
-          cartItem.innerHTML = `
-            <div class="w-20 h-20 flex-shrink-0">
-              <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover rounded">
-            </div>
-            <div class="ml-4 flex-grow">
-              <h4 class="text-sm font-medium">${item.name}</h4>
-              <p class="text-accent-color font-semibold mt-1">${formatKES(item.price)}</p>
-              <div class="flex items-center mt-2">
-                <button class="quantity-btn bg-gray-100 px-2 py-1 rounded-l" data-product-id="${item.id}" data-action="decrease">-</button>
-                <span class="px-3 py-1 bg-gray-100">${item.quantity}</span>
-                <button class="quantity-btn bg-gray-100 px-2 py-1 rounded-r" data-product-id="${item.id}" data-action="increase">+</button>
-              </div>
-            </div>
-            <button class="remove-item ml-2 text-gray-400 hover:text-red-500" data-product-id="${item.id}">
-              <i class="fas fa-times"></i>
-            </button>
-          `;
-          
-          cartItemsContainer.appendChild(cartItem);
-        });
-        
-        // Add event listeners for quantity buttons
-        document.querySelectorAll('.quantity-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const productId = e.target.dataset.productId;
-            const action = e.target.dataset.action;
-            const item = cart.find(item => item.id === productId);
-            
-            if (item) {
-              if (action === 'increase') {
-                updateQuantity(productId, item.quantity + 1);
-              } else if (action === 'decrease' && item.quantity > 1) {
-                updateQuantity(productId, item.quantity - 1);
-              }
-            }
-          });
-        });
-        
-        // Add event listeners for remove buttons
-        document.querySelectorAll('.remove-item').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const productId = e.target.closest('.remove-item').dataset.productId;
-            removeFromCart(productId);
-          });
-        });
-      }
-      
-      // Update subtotal
-      const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-      cartSubtotal.textContent = formatKES(subtotal);
-    }
-    
-    function showAddedToCartNotification(productName) {
-      // Create notification element
-      const notification = document.createElement('div');
-      notification.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-4 py-3 rounded shadow-lg z-50 transform translate-y-20 opacity-0 transition-all duration-300';
-      notification.innerHTML = `
-        <div class="flex items-center">
-          <i class="fas fa-check-circle mr-2"></i>
-          <span>${productName} added to cart</span>
-        </div>
-      `;
-      
-      document.body.appendChild(notification);
-      
-      // Animate in
-      setTimeout(() => {
-        notification.classList.remove('translate-y-20', 'opacity-0');
-      }, 100);
-      
-      // Remove after delay
-      setTimeout(() => {
-        notification.classList.add('translate-y-20', 'opacity-0');
-        setTimeout(() => {
-          document.body.removeChild(notification);
-        }, 300);
-      }, 3000);
-    }
-    
-    function openInquiryModal(productId, productName) {
-      document.getElementById('inquiry-product-id').value = productId;
-      document.getElementById('inquiry-product-name').value = productName;
-      inquiryModal.classList.add('active');
-      overlayBg.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-    }
-    
-    function closeInquiryModal() {
-      inquiryModal.classList.remove('active');
-      if (!cartOverlay.classList.contains('open') && !confirmationModal.classList.contains('active')) {
-        overlayBg.classList.add('hidden');
-        document.body.style.overflow = '';
-      }
-      
-      // Reset form
-      inquiryForm.reset();
-    }
-    
-    function handleInquirySubmit(e) {
-      e.preventDefault();
-      
-      // Show loading state
-      document.querySelector('.inquiry-submit-text').classList.add('hidden');
-      document.querySelector('.inquiry-loading').classList.remove('hidden');
-      
-      // Simulate submission
-      setTimeout(() => {
-        closeInquiryModal();
-        
-        // Show success notification
-        const notification = document.createElement('div');
-        notification.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-4 py-3 rounded shadow-lg z-50';
-        notification.innerHTML = `
-          <div class="flex items-center">
-            <i class="fas fa-check-circle mr-2"></i>
-            <span>Your inquiry has been sent successfully!</span>
-          </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // Reset loading state
-        document.querySelector('.inquiry-submit-text').classList.remove('hidden');
-        document.querySelector('.inquiry-loading').classList.add('hidden');
-        
-        // Remove notification after delay
-        setTimeout(() => {
-          document.body.removeChild(notification);
-        }, 5000);
-      }, 1500);
-    }
-    
-    function processCheckout() {
-      // Show loading state
-      checkoutBtn.innerHTML = '<span class="loading-spinner mr-2"></span> Processing...';
-      checkoutBtn.disabled = true;
-      
-      // Simulate processing
-      setTimeout(() => {
-        // Prepare order details
-        let orderDetailsHTML = '';
-        cart.forEach(item => {
-          orderDetailsHTML += `
-            <div class="flex justify-between mb-2">
-              <span>${item.name} x ${item.quantity}</span>
-              <span>${formatKES(item.price * item.quantity)}</span>
-            </div>
-          `;
-        });
-        
-        const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-        orderDetailsHTML += `
-          <div class="border-t pt-2 mt-2 font-semibold flex justify-between">
-            <span>Total:</span>
-            <span>${formatKES(subtotal)}</span>
-          </div>
-          <div class="text-sm text-gray-500 mt-2">
-            <p>Order #: ORD-${Math.floor(100000 + Math.random() * 900000)}</p>
-            <p>Date: ${new Date().toLocaleDateString()}</p>
-          </div>
-        `;
-        
-        orderDetailsContainer.innerHTML = orderDetailsHTML;
-        
-        // Clear cart
-        cart = [];
-        saveCart();
-        updateCartUI();
-        
-        // Close cart and show confirmation
-        toggleCart(false);
-        showConfirmationModal();
-        
-        // Reset button
-        checkoutBtn.innerHTML = 'Checkout';
-        checkoutBtn.disabled = true;
-      }, 2000);
-    }
-    
-    function showConfirmationModal() {
-      confirmationModal.classList.add('active');
-      overlayBg.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-    }
-    
-    function closeConfirmationModal() {
-      confirmationModal.classList.remove('active');
-      overlayBg.classList.add('hidden');
-      document.body.style.overflow = '';
-    }
+  }
 
-    // Add format KES helper function
-    function formatKES(amount) {
-      return 'KSh ' + amount.toLocaleString('en-KE');
-    }
-
-    // Add account functionality
-    function initAccountModal() {
-      const accountModal = document.getElementById('account-modal');
-      const accountBtn = document.getElementById('account-btn');
-      const accountCloseBtns = document.querySelectorAll('.account-close');
-      const accountTabs = document.querySelectorAll('.account-tab');
-      const accountTabContents = document.querySelectorAll('.account-tab-content');
-      const accountLoginForm = document.getElementById('account-login-form');
-      const accountRegisterForm = document.getElementById('account-register-form');
-      const oauthButtons = document.querySelectorAll('.oauth-btn');
-
-      // Show account modal
-      accountBtn.addEventListener('click', () => {
-        accountModal.classList.add('active');
-        overlayBg.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
+  async function saveProductsToAPI(productsData) {
+    try {
+      const response = await fetch('https://magicloops.dev/api/loop/admin-save-products/run', {
+        method: 'POST',
+        body: JSON.stringify({ products: productsData }),
       });
-
-      // Close account modal
-      accountCloseBtns.forEach(btn => {
-        btn.addEventListener('click', closeAccountModal);
-      });
-
-      // Tab switching
-      accountTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          accountTabs.forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          const tabId = tab.dataset.tab;
-          accountTabContents.forEach(content => {
-            content.classList.add('hidden');
-          });
-          document.getElementById(tabId).classList.remove('hidden');
-        });
-      });
-
-      // Login form submission
-      accountLoginForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        // Show loading
-        document.querySelector('.account-login-text').classList.add('hidden');
-        document.querySelector('.account-login-loading').classList.remove('hidden');
-        const email = document.getElementById('account-email').value;
-        const password = document.getElementById('account-password').value;
-        // Simulate login
-        setTimeout(() => {
-          const users = JSON.parse(localStorage.getItem('furniture-users') || '[]');
-          const user = users.find(u => u.email === email && u.password === password);
-          if (user) {
-            // Set as logged in
-            isAdmin = true;
-            localStorage.setItem('isAdmin', 'true');
-            localStorage.setItem('currentUser', JSON.stringify(user));
-            // Update UI
-            updateAdminUI();
-            closeAccountModal();
-            showNotification('Logged in successfully');
-          } else {
-            showNotification('Invalid email or password', 'error');
-          }
-          // Reset loading
-          document.querySelector('.account-login-text').classList.remove('hidden');
-          document.querySelector('.account-login-loading').classList.add('hidden');
-        }, 1000);
-      });
-
-      // Register form submission
-      accountRegisterForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        // Show loading
-        document.querySelector('.account-register-text').classList.add('hidden');
-        document.querySelector('.account-register-loading').classList.remove('hidden');
-        const email = document.getElementById('register-email').value;
-        const password = document.getElementById('register-password').value;
-        const inviteCode = document.getElementById('invite-code').value;
-        // Check invite code - in real app this would be validated against backend
-        setTimeout(() => {
-          if (inviteCode === 'FURNITURE2025') {
-            // Create user account
-            const user = { email, password, registered: new Date().toISOString() };
-            // Save to localStorage
-            const users = JSON.parse(localStorage.getItem('furniture-users') || '[]');
-            users.push(user);
-            localStorage.setItem('furniture-users', JSON.stringify(users));
-            // Set as logged in
-            isAdmin = true;
-            localStorage.setItem('isAdmin', 'true');
-            localStorage.setItem('currentUser', JSON.stringify(user));
-            // Update UI
-            updateAdminUI();
-            closeAccountModal();
-            showNotification('Account created successfully');
-          } else {
-            showNotification('Invalid invite code', 'error');
-          }
-          // Reset loading
-          document.querySelector('.account-register-text').classList.remove('hidden');
-          document.querySelector('.account-register-loading').classList.add('hidden');
-        }, 1000);
-      });
-
-      // OAuth button handlers
-      oauthButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-          const provider = btn.dataset.provider;
-          handleOAuthLogin(provider);
-        });
-      });
+      return await response.json();
+    } catch (error) {
+      console.error('Error saving products:', error);
+      localStorage.setItem('furniture-products', JSON.stringify(productsData));
+      return { success: false, error: error.message };
     }
+  }
 
-    function closeAccountModal() {
-      const accountModal = document.getElementById('account-modal');
-      accountModal.classList.remove('active');
-      if (!cartOverlay.classList.contains('open') && 
-          !confirmationModal.classList.contains('active') &&
-          !inquiryModal.classList.contains('active')) {
-        overlayBg.classList.add('hidden');
-        document.body.style.overflow = '';
-      }
-      // Reset forms
-      document.getElementById('account-login-form').reset();
-      document.getElementById('account-register-form').reset();
-    }
+  function showLoginModal() {
+    loginModal.classList.add('active');
+    overlayBg.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
 
-    function handleOAuthLogin(provider) {
-      // In a real app, this would redirect to OAuth provider
-      // Here we'll simulate the flow
-      showNotification(`Connecting to ${provider}...`);
-      setTimeout(() => {
-        // Create mock user data
-        const user = {
-          email: `user_${Date.now()}@${provider}.com`,
-          provider: provider,
-          registered: new Date().toISOString()
-        };
-        // Set as logged in
+  function closeLoginModal() {
+    loginModal.classList.remove('active');
+    overlayBg.classList.add('hidden');
+    document.body.style.overflow = '';
+    loginForm.reset();
+  }
+
+  function handleLogin(e) {
+    e.preventDefault();
+    document.querySelector('.login-submit-text').classList.add('hidden');
+    document.querySelector('.login-loading').classList.remove('hidden');
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+    setTimeout(() => {
+      if (username === 'admin' && password === 'password') {
         isAdmin = true;
         localStorage.setItem('isAdmin', 'true');
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        // Update UI
         updateAdminUI();
-        closeAccountModal();
-        showNotification(`Logged in via ${provider}`);
-      }, 1500);
+        closeLoginModal();
+        showNotification('Logged in successfully as admin');
+      } else {
+        showNotification('Invalid username or password', 'error');
+      }
+      document.querySelector('.login-submit-text').classList.remove('hidden');
+      document.querySelector('.login-loading').classList.add('hidden');
+    }, 1000);
+  }
+
+  function handleLogout() {
+    isAdmin = false;
+    localStorage.removeItem('isAdmin');
+    updateAdminUI();
+    closeAdminDashboard();
+    showNotification('Logged out successfully');
+  }
+
+  function updateAdminUI() {
+    const dashboardBtn = document.getElementById('admin-dashboard-btn');
+    const loginBtn = document.getElementById('admin-login-btn');
+    if (isAdmin) {
+      dashboardBtn.classList.remove('hidden');
+      loginBtn.classList.add('hidden');
+    } else {
+      dashboardBtn.classList.add('hidden');
+      loginBtn.classList.remove('hidden');
     }
-  </script>
+  }
+
+  function toggleAdminDashboard() {
+    const dashboard = adminDashboard;
+    const isOpen = dashboard.classList.contains('translate-x-0');
+    if (isOpen) {
+      closeAdminDashboard();
+    } else {
+      openAdminDashboard();
+    }
+  }
+
+  function openAdminDashboard() {
+    adminDashboard.classList.remove('-translate-x-full');
+    adminDashboard.classList.add('translate-x-0');
+    overlayBg.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    loadAdminProducts();
+  }
+
+  function closeAdminDashboard() {
+    adminDashboard.classList.remove('translate-x-0');
+    adminDashboard.classList.add('-translate-x-full');
+    overlayBg.classList.add('hidden');
+    document.body.style.overflow = '';
+    resetProductForm();
+  }
+
+  function loadAdminProducts() {
+    adminProductsContainer.innerHTML = `
+      <div class="text-center py-8">
+        <div class="loading-spinner mx-auto mb-4"></div>
+        <p class="text-gray-600">Loading products...</p>
+      </div>
+    `;
+    setTimeout(() => {
+      adminProductsContainer.innerHTML = '';
+      products.forEach(product => {
+        const productItem = document.createElement('div');
+        productItem.className = 'admin-product-item border rounded p-3 flex items-center';
+        productItem.innerHTML = `
+          <div class="w-16 h-16 flex-shrink-0">
+            <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover rounded">
+          </div>
+          <div class="ml-4 flex-grow">
+            <h4 class="font-medium">${product.name}</h4>
+            <p class="text-sm text-gray-500">${product.category} - ${formatKES(product.price)}</p>
+          </div>
+          <div class="flex space-x-2">
+            <button class="edit-product-btn px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200" data-product-id="${product.id}">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="delete-product-btn px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200" data-product-id="${product.id}">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
+        adminProductsContainer.appendChild(productItem);
+      });
+      addAdminProductEventListeners();
+    }, 800);
+  }
+
+  function addAdminProductEventListeners() {
+    document.querySelectorAll('.edit-product-btn').forEach(btn => {
+      btn.addEventListener('click', e => editProduct(e.currentTarget.dataset.productId));
+    });
+    document.querySelectorAll('.delete-product-btn').forEach(btn => {
+      btn.addEventListener('click', e => deleteProduct(e.currentTarget.dataset.productId));
+    });
+  }
+
+  function editProduct(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    document.querySelector('.admin-tab[data-tab="add-product"]').click();
+    editProductId.value = product.id;
+    productName.value = product.name;
+    productCategory.value = product.category;
+    productPrice.value = product.price;
+    productDescription.value = product.description;
+    previewImage.src = product.image;
+    imagePreview.classList.remove('hidden');
+    saveButton.textContent = 'Update Product';
+  }
+
+  function deleteProduct(productId) {
+    if (confirm('Are you sure you want to delete this product?')) {
+      const index = products.findIndex(p => p.id === productId);
+      if (index !== -1) {
+        products.splice(index, 1);
+        saveProductsToAPI(products).then(() => {
+          loadAdminProducts();
+          loadProducts(currentCategory);
+          showNotification('Product deleted successfully');
+        });
+      }
+    }
+  }
+
+  function handleProductFormSubmit(e) {
+    e.preventDefault();
+    saveButton.classList.add('hidden');
+    productSaving.classList.remove('hidden');
+    const editId = editProductId.value;
+    const nameVal = productName.value;
+    const categoryVal = productCategory.value;
+    const priceVal = parseFloat(productPrice.value);
+    const descVal = productDescription.value;
+    const imageVal = previewImage.src;
+    if (!editId && !imageVal) {
+      alert('Please select an image for the product');
+      saveButton.classList.remove('hidden');
+      productSaving.classList.add('hidden');
+      return;
+    }
+    setTimeout(() => {
+      if (editId) {
+        const idx = products.findIndex(p => p.id === editId);
+        if (idx !== -1) {
+          products[idx] = { ...products[idx], name: nameVal, category: categoryVal, price: priceVal, description: descVal, image: imageVal || products[idx].image };
+        }
+      } else {
+        const newId = 'product-' + Date.now();
+        products.push({ id: newId, name: nameVal, category: categoryVal, price: priceVal, description: descVal, image: imageVal });
+      }
+      saveProductsToAPI(products).then(() => {
+        resetProductForm();
+        document.querySelector('.admin-tab[data-tab="product-list"]').click();
+        loadAdminProducts();
+        loadProducts(currentCategory);
+        showNotification(editId ? 'Product updated successfully' : 'New product added successfully');
+        saveButton.classList.remove('hidden');
+        productSaving.classList.add('hidden');
+      });
+    }, 1500);
+  }
+
+  function resetProductForm() {
+    productForm.reset();
+    editProductId.value = '';
+    imagePreview.classList.add('hidden');
+    saveButton.textContent = 'Add Product';
+    productImageFile = null;
+  }
+
+  function handleImageUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+    productImageFile = file;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      previewImage.src = ev.target.result;
+      imagePreview.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `fixed bottom-4 right-4 px-4 py-3 rounded shadow-lg z-50 transform translate-y-20 opacity-0 transition-all duration-300 ${
+      type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+    }`;
+    notification.innerHTML = `<div class="flex items-center"><i class="fas ${
+      type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'
+    } mr-2"></i><span>${message}</span></div>`;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      notification.classList.remove('translate-y-20', 'opacity-0');
+    }, 100);
+    setTimeout(() => {
+      notification.classList.add('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 3000);
+  }
+
+  function loadProducts(category) {
+    productsContainer.innerHTML = `
+      <div class="col-span-full text-center py-16">
+        <div class="loading-spinner mx-auto mb-4"></div>
+        <p class="text-gray-600">Loading products...</p>
+      </div>
+    `;
+    setTimeout(() => {
+      const filtered = category === 'all' ? products : products.filter(p => p.category === category);
+      renderProducts(filtered);
+    }, 800);
+  }
+
+  function renderProducts(list) {
+    if (list.length === 0) {
+      productsContainer.innerHTML = `
+        <div class="col-span-full text-center py-16">
+          <p class="text-gray-500">No products found in this category.</p>
+        </div>
+      `;
+      return;
+    }
+    productsContainer.innerHTML = '';
+    list.forEach(product => {
+      const card = document.createElement('div');
+      card.className = 'product-card bg-white rounded-lg overflow-hidden shadow-md';
+      card.innerHTML = `
+        <div class="product-image-container">
+          <img src="${product.image}" alt="${product.name}" class="product-image">
+          <div class="zoom-icon" data-src="${product.image}" data-product-name="${product.name}">
+            <i class="fas fa-search-plus"></i>
+          </div>
+        </div>
+        <div class="p-4">
+          <h3 class="font-semibold text-gray-800 mb-1">${product.name}</h3>
+          <p class="text-sm text-gray-600 mb-3 line-clamp-2">${product.description}</p>
+          <p class="font-bold text-lg mb-3 accent-color">${formatKES(product.price)}</p>
+          <div class="flex space-x-2">
+            <button class="add-to-cart-btn flex-1 py-2 px-3 btn-primary text-white text-sm font-medium rounded" data-product-id="${product.id}">Add to Cart</button>
+            <button class="inquiry-btn flex-1 py-2 px-3 btn-outline text-sm font-medium rounded" data-product-id="${product.id}" data-product-name="${product.name}">Inquiry</button>
+          </div>
+        </div>
+      `;
+      productsContainer.appendChild(card);
+    });
+    initZoomIcons();
+  }
+
+  function initEventListeners() {
+    categoryTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        categoryTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentCategory = tab.dataset.category;
+        loadProducts(currentCategory);
+      });
+    });
+    cartButton.addEventListener('click', toggleCart);
+    closeCartButton.addEventListener('click', toggleCart);
+    overlayBg.addEventListener('click', () => {
+      toggleCart(false);
+      closeInquiryModal();
+      closeConfirmationModal();
+    });
+    productsContainer.addEventListener('click', e => {
+      if (e.target.closest('.add-to-cart-btn')) {
+        addToCart(e.target.closest('.add-to-cart-btn').dataset.productId);
+      }
+      if (e.target.closest('.inquiry-btn')) {
+        const btn = e.target.closest('.inquiry-btn');
+        openInquiryModal(btn.dataset.productId, btn.dataset.productName);
+      }
+    });
+    inquiryCloseBtns.forEach(btn => btn.addEventListener('click', closeInquiryModal));
+    inquiryForm.addEventListener('submit', handleInquirySubmit);
+    checkoutBtn.addEventListener('click', processCheckout);
+    continueShoppingBtn.addEventListener('click', () => closeConfirmationModal());
+    document.getElementById('admin-login-btn').addEventListener('click', showLoginModal);
+    loginForm.addEventListener('submit', handleLogin);
+    loginCloseBtn.addEventListener('click', closeLoginModal);
+    document.getElementById('admin-dashboard-btn').addEventListener('click', toggleAdminDashboard);
+    closeDashboardBtn.addEventListener('click', closeAdminDashboard);
+    adminLogoutBtn.addEventListener('click', handleLogout);
+    adminTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        adminTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        adminTabContents.forEach(c => c.classList.add('hidden'));
+        document.getElementById(`${tab.dataset.tab}-tab`).classList.remove('hidden');
+      });
+    });
+    uploadImageButton.addEventListener('click', () => productImage.click());
+    productImage.addEventListener('change', handleImageUpload);
+    productForm.addEventListener('submit', handleProductFormSubmit);
+    productSearch.addEventListener('input', e => {
+      const term = e.target.value.toLowerCase();
+      document.querySelectorAll('.admin-product-item').forEach(item => {
+        const name = item.querySelector('h4').textContent.toLowerCase();
+        item.classList.toggle('hidden', !name.includes(term));
+      });
+    });
+    initAccountModal();
+  }
+
+  function initZoomIcons() {
+    document.querySelectorAll('.zoom-icon').forEach(icon => {
+      icon.addEventListener('click', e => {
+        const src = e.currentTarget.dataset.src;
+        const name = e.currentTarget.dataset.productName;
+        const container = document.getElementById('lightgallery-container');
+        container.innerHTML = `<a href="${src}"><img src="${src}" alt="${name}" /></a>`;
+        lightGallery(container, {
+          dynamic: true,
+          dynamicEl: [{ src, thumb: src, subHtml: `<h4>${name}</h4>` }],
+          download: false
+        });
+      });
+    });
+  }
+
+  function toggleCart(open = null) {
+    const isOpen = open !== null ? open : !cartOverlay.classList.contains('open');
+    if (isOpen) {
+      cartOverlay.classList.add('open');
+      overlayBg.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    } else {
+      cartOverlay.classList.remove('open');
+      overlayBg.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+  }
+
+  function addToCart(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    const existing = cart.find(item => item.id === productId);
+    if (existing) {
+      existing.quantity++;
+    } else {
+      cart.push({ id: product.id, name: product.name, price: product.price, image: product.image, quantity: 1 });
+    }
+    saveCart();
+    updateCartUI();
+    showAddedToCartNotification(product.name);
+  }
+
+  function removeFromCart(productId) {
+    cart = cart.filter(item => item.id !== productId);
+    saveCart();
+    updateCartUI();
+  }
+
+  function updateQuantity(productId, quantity) {
+    const item = cart.find(i => i.id === productId);
+    if (item) {
+      item.quantity = Math.max(1, quantity);
+      saveCart();
+      updateCartUI();
+    }
+  }
+
+  function saveCart() {
+    localStorage.setItem('furniture-cart', JSON.stringify(cart));
+  }
+
+  function loadCart() {
+    const saved = localStorage.getItem('furniture-cart');
+    if (saved) {
+      cart = JSON.parse(saved);
+      updateCartUI();
+    }
+  }
+
+  function updateCartUI() {
+    const totalItems = cart.reduce((sum, i) => sum + i.quantity, 0);
+    if (totalItems > 0) {
+      cartCountBadge.textContent = totalItems;
+      cartCountBadge.classList.remove('hidden');
+      checkoutBtn.disabled = false;
+    } else {
+      cartCountBadge.classList.add('hidden');
+      checkoutBtn.disabled = true;
+    }
+
+    if (cart.length === 0) {
+      cartItemsContainer.innerHTML = `
+        <div class="text-center py-12 text-gray-500">
+          <i class="fas fa-shopping-cart text-4xl mb-4 opacity-30"></i>
+          <p>Your cart is empty</p>
+          <p class="text-sm mt-2">Browse our collection and add items you love</p>
+        </div>
+      `;
+    } else {
+      cartItemsContainer.innerHTML = '';
+      cart.forEach(item => {
+        const cartItem = document.createElement('div');
+        cartItem.className = 'flex py-4 border-b';
+        cartItem.innerHTML = `
+          <div class="w-20 h-20 flex-shrink-0">
+            <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover rounded">
+          </div>
+          <div class="ml-4 flex-grow">
+            <h4 class="text-sm font-medium">${item.name}</h4>
+            <p class="text-accent-color font-semibold mt-1">${formatKES(item.price)}</p>
+            <div class="flex items-center mt-2">
+              <button class="quantity-btn bg-gray-100 px-2 py-1 rounded-l" data-product-id="${item.id}" data-action="decrease">-</button>
+              <span class="px-3 py-1 bg-gray-100">${item.quantity}</span>
+              <button class="quantity-btn bg-gray-100 px-2 py-1 rounded-r" data-product-id="${item.id}" data-action="increase">+</button>
+            </div>
+          </div>
+          <button class="remove-item ml-2 text-gray-400 hover:text-red-500" data-product-id="${item.id}">
+            <i class="fas fa-times"></i>
+          </button>
+        `;
+        cartItemsContainer.appendChild(cartItem);
+      });
+      document.querySelectorAll('.quantity-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const { productId, action } = e.target.dataset;
+          const item = cart.find(i => i.id === productId);
+          if (!item) return;
+          if (action === 'increase') updateQuantity(productId, item.quantity + 1);
+          else if (action === 'decrease' && item.quantity > 1) updateQuantity(productId, item.quantity - 1);
+        });
+      });
+      document.querySelectorAll('.remove-item').forEach(btn => {
+        btn.addEventListener('click', e => removeFromCart(e.target.closest('.remove-item').dataset.productId));
+      });
+    }
+    const subtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    cartSubtotal.textContent = formatKES(subtotal);
+  }
+
+  function showAddedToCartNotification(name) {
+    const notification = document.createElement('div');
+    notification.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-4 py-3 rounded shadow-lg z-50 transform translate-y-20 opacity-0 transition-all duration-300';
+    notification.innerHTML = `<div class="flex items-center"><i class="fas fa-check-circle mr-2"></i><span>${name} added to cart</span></div>`;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.classList.remove('translate-y-20', 'opacity-0'), 100);
+    setTimeout(() => {
+      notification.classList.add('translate-y-20', 'opacity-0');
+      setTimeout(() => document.body.removeChild(notification), 300);
+    }, 3000);
+  }
+
+  function openInquiryModal(productId, name) {
+    document.getElementById('inquiry-product-id').value = productId;
+    document.getElementById('inquiry-product-name').value = name;
+    inquiryModal.classList.add('active');
+    overlayBg.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeInquiryModal() {
+    inquiryModal.classList.remove('active');
+    if (!cartOverlay.classList.contains('open') && !confirmationModal.classList.contains('active')) {
+      overlayBg.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+    inquiryForm.reset();
+  }
+
+  function handleInquirySubmit(e) {
+    e.preventDefault();
+    document.querySelector('.inquiry-submit-text').classList.add('hidden');
+    document.querySelector('.inquiry-loading').classList.remove('hidden');
+    setTimeout(() => {
+      closeInquiryModal();
+      const notification = document.createElement('div');
+      notification.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-4 py-3 rounded shadow-lg z-50';
+      notification.innerHTML = `<div class="flex items-center"><i class="fas fa-check-circle mr-2"></i><span>Your inquiry has been sent successfully!</span></div>`;
+      document.body.appendChild(notification);
+      document.querySelector('.inquiry-submit-text').classList.remove('hidden');
+      document.querySelector('.inquiry-loading').classList.add('hidden');
+      setTimeout(() => document.body.removeChild(notification), 5000);
+    }, 1500);
+  }
+
+  // Updated checkout function to use M-Pesa
+  function processCheckout() {
+    const phoneNumber = document.getElementById('mpesa-phone').value;
+    const phoneRegex = /^254\d{9}$/;
+    if (!phoneRegex.test(phoneNumber)) {
+      showNotification('Please enter a valid Safaricom number starting with 254', 'error');
+      return;
+    }
+    const subtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const testMode = document.getElementById('test-mode').checked;
+    document.querySelector('.checkout-btn-text').classList.add('hidden');
+    document.querySelector('.checkout-loading').classList.remove('hidden');
+    checkoutBtn.disabled = true;
+    initiateMpesaPayment(subtotal, phoneNumber, testMode)
+      .then(response => {
+        document.querySelector('.checkout-btn-text').classList.remove('hidden');
+        document.querySelector('.checkout-loading').classList.add('hidden');
+        checkoutBtn.disabled = false;
+        if (response.success) {
+          showMpesaModal(response, phoneNumber, subtotal);
+          const transaction = {
+            id: response.checkoutRequestID,
+            merchantRequestID: response.merchantRequestID,
+            date: new Date().toISOString(),
+            phone: phoneNumber,
+            amount: subtotal,
+            status: 'pending'
+          };
+          addPaymentRecord(transaction);
+        } else {
+          showNotification(response.responseDescription || 'Payment initiation failed', 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Payment error:', error);
+        showNotification('Payment failed. Please try again.', 'error');
+        document.querySelector('.checkout-btn-text').classList.remove('hidden');
+        document.querySelector('.checkout-loading').classList.add('hidden');
+        checkoutBtn.disabled = false;
+      });
+  }
+
+  // M-Pesa API integration
+  async function initiateMpesaPayment(amount, phoneNumber, testMode) {
+    try {
+      const response = await fetch('https://magicloops.dev/api/loop/mpesa-payment/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, phoneNumber, testMode })
+      });
+      return await response.json();
+    } catch (error) {
+      console.error('M-Pesa API error:', error);
+      throw error;
+    }
+  }
+
+  function showMpesaModal(response, phoneNumber, amount) {
+    const mpesaModal = document.getElementById('mpesa-modal');
+    const messageEl = document.getElementById('mpesa-modal-message');
+    messageEl.textContent = `An STK push has been sent to ${phoneNumber}. Please check your phone and complete the payment of KSh ${amount.toLocaleString()}.`;
+    mpesaModal.classList.add('active');
+    overlayBg.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('mpesa-cancel-btn').addEventListener('click', closeMpesaModal);
+    document.getElementById('mpesa-check-status-btn').addEventListener('click', () => {
+      checkPaymentStatus(response.merchantRequestID, response.checkoutRequestID);
+    });
+    setTimeout(() => {
+      checkPaymentStatus(response.merchantRequestID, response.checkoutRequestID);
+    }, 30000);
+  }
+
+  function closeMpesaModal() {
+    const mpesaModal = document.getElementById('mpesa-modal');
+    mpesaModal.classList.remove('active');
+    overlayBg.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  async function checkPaymentStatus(merchantRequestID, checkoutRequestID) {
+    try {
+      const response = await fetch('https://magicloops.dev/api/loop/mpesa-status/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchantRequestID, checkoutRequestID })
+      });
+      const result = await response.json();
+      if (result.success) {
+        updatePaymentRecord(checkoutRequestID, 'success');
+        closeMpesaModal();
+        handleSuccessfulPayment();
+      } else {
+        if (result.status === 'failed') {
+          updatePaymentRecord(checkoutRequestID, 'failed');
+          showNotification('Payment failed: ' + result.resultDesc, 'error');
+          closeMpesaModal();
+        } else {
+          document.getElementById('mpesa-modal-message').textContent = 'Payment is still processing. Please complete the payment on your phone.';
+        }
+      }
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+      showNotification('Could not verify payment status', 'error');
+    }
+  }
+
+  function handleSuccessfulPayment() {
+    let html = '';
+    cart.forEach(item => {
+      html += `<div class="flex justify-between mb-2"><span>${item.name} x ${item.quantity}</span><span>${formatKES(item.price * item.quantity)}</span></div>`;
+    });
+    const subtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const phoneNumber = document.getElementById('mpesa-phone').value;
+    html += `<div class="border-t pt-2 mt-2 font-semibold flex justify-between"><span>Total:</span><span>${formatKES(subtotal)}</span></div>
+      <div class="text-sm text-gray-500 mt-2">
+        <p>Order #: ORD-${Math.floor(100000 + Math.random() * 900000)}</p>
+        <p>Date: ${new Date().toLocaleDateString()}</p>
+        <p>Payment Method: M-Pesa (${phoneNumber})</p>
+        <p class="text-green-600 font-semibold">Payment Status: Successful</p>
+      </div>`;
+    orderDetailsContainer.innerHTML = html;
+    cart = [];
+    saveCart();
+    updateCartUI();
+    toggleCart(false);
+    showConfirmationModal();
+  }
+
+  // Payment history management
+  function loadPaymentHistory() {
+    const tableBody = document.getElementById('payment-history-table');
+    const statusFilter = document.getElementById('payment-status').value;
+    const phoneFilter = document.getElementById('payment-phone').value;
+    const dateFrom = document.getElementById('payment-date-from').value;
+    const dateTo = document.getElementById('payment-date-to').value;
+    let payments = JSON.parse(localStorage.getItem('mpesa-payments') || '[]');
+    if (statusFilter) payments = payments.filter(p => p.status === statusFilter);
+    if (phoneFilter) payments = payments.filter(p => p.phone.includes(phoneFilter));
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom);
+      payments = payments.filter(p => new Date(p.date) >= fromDate);
+    }
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59);
+      payments = payments.filter(p => new Date(p.date) <= toDate);
+    }
+    payments.sort((a, b) => new Date(b.date) - new Date(a.date));
+    if (payments.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="5" class="py-4 text-center text-gray-500">No payment records found</td></tr>';
+      return;
+    }
+    tableBody.innerHTML = '';
+    payments.forEach(p => {
+      const row = document.createElement('tr');
+      row.className = 'hover:bg-gray-50';
+      const formattedDate = new Date(p.date).toLocaleString();
+      const statusClass = p.status === 'success' ? 'text-green-600' : p.status === 'failed' ? 'text-red-600' : 'text-yellow-600';
+      row.innerHTML = `
+        <td class="py-2 px-3 border-b">${p.id}</td>
+        <td class="py-2 px-3 border-b">${formattedDate}</td>
+        <td class="py-2 px-3 border-b">${p.phone}</td>
+        <td class="py-2 px-3 border-b">${formatKES(p.amount)}</td>
+        <td class="py-2 px-3 border-b font-medium ${statusClass}">${p.status}</td>`;
+      tableBody.appendChild(row);
+    });
+  }
+
+  function addPaymentRecord(payment) {
+    const records = JSON.parse(localStorage.getItem('mpesa-payments') || '[]');
+    records.push(payment);
+    localStorage.setItem('mpesa-payments', JSON.stringify(records));
+  }
+
+  function updatePaymentRecord(transactionId, status) {
+    const records = JSON.parse(localStorage.getItem('mpesa-payments') || '[]');
+    const idx = records.findIndex(p => p.id === transactionId);
+    if (idx !== -1) {
+      records[idx].status = status;
+      localStorage.setItem('mpesa-payments', JSON.stringify(records));
+    }
+  }
+
+  function downloadPaymentsCSV() {
+    const statusFilter = document.getElementById('payment-status').value;
+    const phoneFilter = document.getElementById('payment-phone').value;
+    const dateFrom = document.getElementById('payment-date-from').value;
+    const dateTo = document.getElementById('payment-date-to').value;
+    let payments = JSON.parse(localStorage.getItem('mpesa-payments') || '[]');
+    if (statusFilter) payments = payments.filter(p => p.status === statusFilter);
+    if (phoneFilter) payments = payments.filter(p => p.phone.includes(phoneFilter));
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom);
+      payments = payments.filter(p => new Date(p.date) >= fromDate);
+    }
+    if (dateTo) {
+      const toDate = new Date(dateTo);
+      toDate.setHours(23, 59, 59);
+      payments = payments.filter(p => new Date(p.date) <= toDate);
+    }
+    let csvContent = "Transaction ID,Date/Time,Phone Number,Amount (KSh),Status\n";
+    payments.forEach(p => {
+      const formattedDate = new Date(p.date).toLocaleString();
+      const amount = p.amount.toLocaleString();
+      csvContent += `${p.id},${formattedDate},${p.phone},${amount},${p.status}\n`;
+    });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `mpesa_payments_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function showConfirmationModal() {
+    confirmationModal.classList.add('active');
+    overlayBg.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeConfirmationModal() {
+    confirmationModal.classList.remove('active');
+    overlayBg.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  function formatKES(amount) {
+    return 'KSh ' + amount.toLocaleString('en-KE');
+  }
+
+  // Account functionality
+  function initAccountModal() {
+    const accountModal = document.getElementById('account-modal');
+    const accountBtn = document.getElementById('account-btn');
+    const accountCloseBtns = document.querySelectorAll('.account-close');
+    const accountTabs = document.querySelectorAll('.account-tab');
+    const accountTabContents = document.querySelectorAll('.account-tab-content');
+    const accountLoginForm = document.getElementById('account-login-form');
+    const accountRegisterForm = document.getElementById('account-register-form');
+    const oauthButtons = document.querySelectorAll('.oauth-btn');
+
+    accountBtn.addEventListener('click', () => {
+      accountModal.classList.add('active');
+      overlayBg.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    });
+
+    accountCloseBtns.forEach(btn => btn.addEventListener('click', closeAccountModal));
+
+    accountTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        accountTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        accountTabContents.forEach(c => c.classList.add('hidden'));
+        document.getElementById(tab.dataset.tab).classList.remove('hidden');
+      });
+    });
+
+    accountLoginForm.addEventListener('submit', e => {
+      e.preventDefault();
+      document.querySelector('.account-login-text').classList.add('hidden');
+      document.querySelector('.account-login-loading').classList.remove('hidden');
+      const email = document.getElementById('account-email').value;
+      const password = document.getElementById('account-password').value;
+      setTimeout(() => {
+        const users = JSON.parse(localStorage.getItem('furniture-users') || '[]');
+        const user = users.find(u => u.email === email && u.password === password);
+        if (user) {
+          isAdmin = true;
+          localStorage.setItem('isAdmin', 'true');
+          localStorage.setItem('currentUser', JSON.stringify(user));
+          updateAdminUI();
+          closeAccountModal();
+          showNotification('Logged in successfully');
+        } else {
+          showNotification('Invalid email or password', 'error');
+        }
+        document.querySelector('.account-login-text').classList.remove('hidden');
+        document.querySelector('.account-login-loading').classList.add('hidden');
+      }, 1000);
+    });
+
+    accountRegisterForm.addEventListener('submit', e => {
+      e.preventDefault();
+      document.querySelector('.account-register-text').classList.add('hidden');
+      document.querySelector('.account-register-loading').classList.remove('hidden');
+      const email = document.getElementById('register-email').value;
+      const password = document.getElementById('register-password').value;
+      const inviteCode = document.getElementById('invite-code').value;
+      setTimeout(() => {
+        if (inviteCode === 'FURNITURE2025') {
+          const user = { email, password, registered: new Date().toISOString() };
+          const users = JSON.parse(localStorage.getItem('furniture-users') || '[]');
+          users.push(user);
+          localStorage.setItem('furniture-users', JSON.stringify(users));
+          isAdmin = true;
+          localStorage.setItem('isAdmin', 'true');
+          localStorage.setItem('currentUser', JSON.stringify(user));
+          updateAdminUI();
+          closeAccountModal();
+          showNotification('Account created successfully');
+        } else {
+          showNotification('Invalid invite code', 'error');
+        }
+        document.querySelector('.account-register-text').classList.remove('hidden');
+        document.querySelector('.account-register-loading').classList.add('hidden');
+      }, 1000);
+    });
+
+    oauthButtons.forEach(btn => {
+      btn.addEventListener('click', () => handleOAuthLogin(btn.dataset.provider));
+    });
+  }
+
+  function closeAccountModal() {
+    const accountModal = document.getElementById('account-modal');
+    accountModal.classList.remove('active');
+    if (!cartOverlay.classList.contains('open') && !confirmationModal.classList.contains('active') && !inquiryModal.classList.contains('active')) {
+      overlayBg.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('account-login-form').reset();
+    document.getElementById('account-register-form').reset();
+  }
+
+  function handleOAuthLogin(provider) {
+    showNotification(`Connecting to ${provider}...`);
+    setTimeout(() => {
+      const user = { email: `user_${Date.now()}@${provider}.com`, provider, registered: new Date().toISOString() };
+      isAdmin = true;
+      localStorage.setItem('isAdmin', 'true');
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      updateAdminUI();
+      closeAccountModal();
+      showNotification(`Logged in via ${provider}`);
+    }, 1500);
+  }
+</script>
+```
 </body>
 </html>
